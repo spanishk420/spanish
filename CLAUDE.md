@@ -9,7 +9,7 @@ Kommunikation mit dem Nutzer auf Deutsch, locker, kurze Antworten.
   - `src/base.html`: Karteikarten-App (Kapitel, Daten, Karteikarten-Logik, Stimmen-Auswahl, Reset)
   - `src/voice.js`: Sprachmodus (Vorlesen per speechSynthesis, Spracherkennung per webkitSpeechRecognition)
   - `src/build.py`: fügt PWA-Head, Sprachmodus-HTML/CSS und voice.js in base.html ein
-- `sw.js`: Service Worker (network-first). Bei Änderungen die Cache-Version (`espanol-vN`) hochzählen.
+- `sw.js`: Service Worker (network-first, eigene Dateien mit `cache: "no-cache"`, weil GitHub Pages 10 Min. Browser-Cache setzt). Bei Änderungen die Cache-Version (`espanol-vN`) hochzählen – sie wird auch als „Version N“ in den Einstellungen angezeigt.
 - `manifest.webmanifest`, `icons/`: PWA-Metadaten, Icon „ñ“ mit Sonne.
 - `robots.txt` + `<meta name="robots" content="noindex">`: Seite soll nicht in Suchmaschinen auftauchen (bewusst, privat).
 

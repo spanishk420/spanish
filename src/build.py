@@ -5,6 +5,7 @@ src = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
 here = pathlib.Path(__file__).parent
 out = here.parent / "index.html"
 voice_js = (here / "voice.js").read_text(encoding="utf-8")
+version = re.search(r'espanol-v(\d+)', (here.parent / "sw.js").read_text(encoding="utf-8")).group(1)
 
 def rep(s, old, new, count=1):
     assert s.count(old) == count, (old[:60], s.count(old))
@@ -107,6 +108,7 @@ settings_html = """
     <button class="btn show" id="sTest" type="button">🧪 Mikro testen</button>
     <div class="vdiag" id="sDiag"></div>
   </div>
+  <p class="vtip">Version """ + version + """</p>
 </div>
 """
 s = rep(s, "\n<script>\n", voice_html + settings_html + "\n<script>\n")
