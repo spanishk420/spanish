@@ -22,7 +22,8 @@ Fortschritt nur in localStorage (`verbos-v2`). Gewichtung: niedriges Level und h
 - Für unterwegs/Auto, ohne Tippen.
 - Mikrofon: kein Siri-Piepton gewünscht – aber durchgehende Erkennung + gleichzeitige Sprachausgabe hat auf dem iPhone „erkennt nichts“ ergeben. Seit 31.10.2026: Mikro pro Antwort frisch gestartet (nach der Ansage, nie während TTS), Zwischenergebnisse werden sofort ausgewertet. Karten in 5er-Blöcken pro Richtung.
 - Neues Wort wird einmal in seiner Sprache vorgelesen (Deutsch → deutsche Stimme, Spanisch → spanische Stimme, Zahlen deutsch).
-- Richtig → nur „Richtig“, sofort weiter. Falsch → „Falsch“ + richtige Lösung.
+- Richtig → nur Sound (Pling), sofort weiter. Falsch → tiefer Sound + richtige Lösung. Sounds als WAV im JS erzeugt, über <audio> (spielt auch bei Stummschalter).
+- Stimme soll menschlich klingen: Premium-Stimmen werden bevorzugt (voiceTier), Hinweis zum Laden in iOS-Einstellungen. Externe Neural-TTS (edge-tts, Piper-Download) war aus dem Container nicht erreichbar.
 - Erkennung tolerant (z. B. „abla“/„habla“ = hablar), aber ähnliche falsche Wörter ablehnen (ver ≠ beber, correr ≠ comer).
 - TTS: Nutzer meldete deutsche Stimme für spanische Wörter → Stimme wird jetzt immer explizit gesetzt und frisch aus getVoices() geholt (iOS liefert die Liste verzögert); erstes speak() synchron im Start-Tipp.
 - Diagnose im Sprachmodus: Zeile mit gewählten Stimmen / Mikro-Fehlern, Knopf „🧪 Mikro testen“. Nach 2 stillen Runden Hinweis (Home-Bildschirm-App vs. Safari, Siri & Diktieren).

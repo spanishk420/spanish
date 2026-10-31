@@ -396,10 +396,16 @@ const tts=("speechSynthesis" in window)?window.speechSynthesis:null;
 // Stimmen nach Qualität sortieren: neuronale/erweiterte Stimmen zuerst, Spanien vor Lateinamerika
 const VOICE_KEY="verbos-voice";
 let esVoices=[];
+// Qualitätsstufe: 2 = Premium/neuronal, 1 = Erweitert, 0 = einfach (klingt am ehesten nach Roboter)
+function voiceTier(v){
+  if(!v)return -1;
+  const n=(v.name+" "+v.voiceURI).toLowerCase();
+  if(/premium|natural|neural|online/.test(n))return 2;
+  if(/enhanced|erweitert|mejorad/.test(n))return 1;
+  return 0;
+}
 function voiceScore(v){
-  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
-  if(/natural|neural|online/.test(n))s+=60;
-  if(/premium|enhanced|erweitert|mejorad/.test(n))s+=50;
+  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=voiceTier(v)*60;
   if(/google/.test(n))s+=35;
   if(/m[oó]nica|marisol|paulina|elvira|alvaro|álvaro|jorge|helena|lucia|lucía/.test(n))s+=20;
   if(/eloquence|espeak|compact|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(n))s-=40;
@@ -416,7 +422,9 @@ function findVoice(){
   const all=voicesNow(); if(!all.length){if(voiceTries++<20)setTimeout(findVoice,300);return}
   esVoices=all.filter(v=>/^es/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
   let saved=null; try{saved=localStorage.getItem(VOICE_KEY)}catch(e){}
-  esVoice=esVoices.find(v=>v.voiceURI===saved)||esVoices[0]||null;
+  const keep=esVoices.find(v=>v.voiceURI===saved);
+  // Gespeicherte Wahl behalten – außer inzwischen gibt es eine hochwertigere Stimme (z. B. neu geladen)
+  esVoice=keep&&voiceTier(keep)>=voiceTier(esVoices[0])?keep:esVoices[0]||null;
   renderVoice();
   if(!esVoices.length)$("voiceTip").textContent="Dein Handy hat keine spanische Stimme. Lade in den Einstellungen unter Sprachausgabe eine spanische Stimme herunter.";
 }
@@ -442,7 +450,7 @@ function speak(text){
     if(!esVoice)findVoice();
     const v=freshVoice(esVoice);
     u.lang=v?v.lang.replace("_","-"):"es-ES"; if(v)u.voice=v;
-    u.rate=.85; u.pitch=1; u.volume=1;
+    u.rate=.9; u.pitch=1; u.volume=1;
     // kleine Pause, sonst schneiden manche Handys den Wortanfang ab
     setTimeout(()=>tts.speak(u),60);
   }catch(e){}

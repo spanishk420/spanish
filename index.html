@@ -460,10 +460,16 @@ const tts=("speechSynthesis" in window)?window.speechSynthesis:null;
 // Stimmen nach Qualität sortieren: neuronale/erweiterte Stimmen zuerst, Spanien vor Lateinamerika
 const VOICE_KEY="verbos-voice";
 let esVoices=[];
+// Qualitätsstufe: 2 = Premium/neuronal, 1 = Erweitert, 0 = einfach (klingt am ehesten nach Roboter)
+function voiceTier(v){
+  if(!v)return -1;
+  const n=(v.name+" "+v.voiceURI).toLowerCase();
+  if(/premium|natural|neural|online/.test(n))return 2;
+  if(/enhanced|erweitert|mejorad/.test(n))return 1;
+  return 0;
+}
 function voiceScore(v){
-  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
-  if(/natural|neural|online/.test(n))s+=60;
-  if(/premium|enhanced|erweitert|mejorad/.test(n))s+=50;
+  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=voiceTier(v)*60;
   if(/google/.test(n))s+=35;
   if(/m[oó]nica|marisol|paulina|elvira|alvaro|álvaro|jorge|helena|lucia|lucía/.test(n))s+=20;
   if(/eloquence|espeak|compact|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(n))s-=40;
@@ -480,7 +486,9 @@ function findVoice(){
   const all=voicesNow(); if(!all.length){if(voiceTries++<20)setTimeout(findVoice,300);return}
   esVoices=all.filter(v=>/^es/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
   let saved=null; try{saved=localStorage.getItem(VOICE_KEY)}catch(e){}
-  esVoice=esVoices.find(v=>v.voiceURI===saved)||esVoices[0]||null;
+  const keep=esVoices.find(v=>v.voiceURI===saved);
+  // Gespeicherte Wahl behalten – außer inzwischen gibt es eine hochwertigere Stimme (z. B. neu geladen)
+  esVoice=keep&&voiceTier(keep)>=voiceTier(esVoices[0])?keep:esVoices[0]||null;
   renderVoice();
   if(!esVoices.length)$("voiceTip").textContent="Dein Handy hat keine spanische Stimme. Lade in den Einstellungen unter Sprachausgabe eine spanische Stimme herunter.";
 }
@@ -506,7 +514,7 @@ function speak(text){
     if(!esVoice)findVoice();
     const v=freshVoice(esVoice);
     u.lang=v?v.lang.replace("_","-"):"es-ES"; if(v)u.voice=v;
-    u.rate=.85; u.pitch=1; u.volume=1;
+    u.rate=.9; u.pitch=1; u.volume=1;
     // kleine Pause, sonst schneiden manche Handys den Wortanfang ab
     setTimeout(()=>tts.speak(u),60);
   }catch(e){}
@@ -603,9 +611,7 @@ $("reset").addEventListener("click",()=>{
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let deVoice = null;
 function deScore(v){
-  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
-  if(/natural|neural|online/.test(n))s+=60;
-  if(/premium|enhanced|erweitert/.test(n))s+=50;
+  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=voiceTier(v)*60;
   if(/google/.test(n))s+=35;
   if(/anna|petra|helena|markus|yannick|viktor|katja|conrad/.test(n))s+=20;
   if(/eloquence|espeak|compact|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(n))s-=40;
@@ -633,7 +639,7 @@ function say(text, lang){
     const u=new SpeechSynthesisUtterance(es?text.replace(/\s*\/\s*/g,", ")+".":text);
     const v=voiceFor(lang);
     u.lang=v?v.lang.replace("_","-"):(es?"es-ES":"de-DE"); if(v)u.voice=v;
-    u.rate=es?.85:1; u.volume=1;
+    u.rate=es?.9:1; u.volume=1;
     let done=false;
     const fin=()=>{if(done)return;done=true;clearTimeout(t);setTimeout(res,150)};
     const t=setTimeout(fin,2500+text.length*160);
@@ -646,6 +652,46 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function unlockTTS(){
   if(!tts)return;
   try{tts.cancel();const u=new SpeechSynthesisUtterance(" ");u.volume=0;tts.speak(u)}catch(e){}
+}
+
+// ---- Sounds für richtig/falsch ----
+// Als WAV im Speicher erzeugt und über <audio> abgespielt: das läuft auf dem iPhone auch,
+// wenn der Stummschalter an ist (Web Audio wäre dann still).
+function makeWav(notes,dur){
+  const rate=22050,n=Math.floor(rate*dur),buf=new ArrayBuffer(44+n*2),d=new DataView(buf);
+  const str=(o,t)=>{for(let i=0;i<t.length;i++)d.setUint8(o+i,t.charCodeAt(i))};
+  str(0,"RIFF");d.setUint32(4,36+n*2,true);str(8,"WAVEfmt ");d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);
+  d.setUint32(24,rate,true);d.setUint32(28,rate*2,true);d.setUint16(32,2,true);d.setUint16(34,16,true);str(36,"data");d.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){
+    const t=i/rate;let v=0;
+    for(const[f,start,len,vol,harm]of notes){
+      const x=t-start;if(x<0||x>len)continue;
+      const env=Math.min(1,x/.008)*Math.exp(-x*(4.5/len));
+      v+=vol*env*(Math.sin(2*Math.PI*f*x)+harm*Math.sin(4*Math.PI*f*x)+harm*.4*Math.sin(6*Math.PI*f*x));
+    }
+    d.setInt16(44+i*2,Math.max(-1,Math.min(1,v))*32767*.9,true);
+  }
+  return URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+}
+const sfx={};
+function sfxInit(){
+  if(sfx.ok)return;
+  // Richtig: helles „Pling-pling“ nach oben. Falsch: zwei tiefe, weiche Töne nach unten.
+  sfx.ok=new Audio(makeWav([[784,0,.35,.35,.15],[1175,.11,.55,.35,.15]],.7));
+  sfx.no=new Audio(makeWav([[247,0,.3,.42,.5],[185,.18,.45,.42,.5]],.65));
+}
+// iOS: jedes <audio> muss einmal beim Tippen gestartet werden, danach darf es von selbst spielen
+function unlockSfx(){
+  sfxInit();
+  for(const a of[sfx.ok,sfx.no]){try{a.muted=true;const p=a.play();const re=()=>{a.pause();a.currentTime=0;a.muted=false};p&&p.then?p.then(re,re):re()}catch(e){}}
+}
+function playSfx(name){
+  return new Promise(res=>{
+    sfxInit();const a=sfx[name];let done=false;
+    const fin=()=>{if(done)return;done=true;clearTimeout(t);a.onended=null;res()};
+    const t=setTimeout(fin,1200);
+    try{a.muted=false;a.currentTime=0;a.onended=fin;const p=a.play();p&&p.catch&&p.catch(fin)}catch(e){fin()}
+  });
 }
 
 // ---- Spracherkennung: pro Antwort frisch gestartet ----
@@ -873,11 +919,12 @@ async function voiceTurn(){
   }else if(result.ok){
     applyGrade(true);vm.ok++;vmStats();
     vmSet("✓ Richtig","good");
-    await say("Richtig","de");
+    await playSfx("ok");
   }else{
     applyGrade(false);vm.no++;vmStats();
     vmSet("✗ Falsch","bad");
-    await say("Falsch.","de"); if(!alive())return;
+    await playSfx("no"); if(!alive())return;
+    await wait(150); if(!alive())return;
     await say(ans,ansLang);
   }
   if(!alive())return;
@@ -888,12 +935,14 @@ function voiceInfo(){
   findVoice();findDeVoice();
   const e=freshVoice(esVoice), d=freshVoice(deVoice);
   if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch.";
-  return `Stimmen: 🇪🇸 ${e.name} · 🇩🇪 ${d?d.name:"Standard"}`;
+  let t=`Stimmen: 🇪🇸 ${e.name} · 🇩🇪 ${d?d.name:"Standard"}`;
+  if(voiceTier(e)<2||voiceTier(d)<2)t+=" · Tipp für eine menschlichere Stimme: Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch (bzw. Deutsch) › z. B. „Mónica“/„Anna“ › Premium laden, dann App neu öffnen.";
+  return t;
 }
 function startVoice(){
   if(!tts){vmSet("Dein Gerät kann nicht vorlesen.","bad");return}
   // Alles, was iOS „beim Tippen“ verlangt, passiert hier synchron
-  unlockTTS();
+  unlockTTS();unlockSfx();
   if(vm.mic&&SR)warmupMic();
   rec.denied=false;rec.silentRun=0;
   vm.on=true;vm.token++;vm.block=0;vm.blockDir=null;vmButtons();
