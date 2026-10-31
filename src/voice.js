@@ -91,7 +91,8 @@ function playSfx(name){
 // Zwischenergebnisse werden sofort ausgewertet, auf ein „fertiges“ Ergebnis wird nicht gewartet.
 const rec={r:null,denied:false,silentRun:0,everHeard:false};
 const standalone=window.navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
-function diag(t){$("vDiag").textContent=t||""}
+rec.ui={heard:"vHeard",diag:"vDiag"};
+function diag(t){$(rec.ui.diag).textContent=t||""}
 function recAbort(){const r=rec.r;rec.r=null;if(r){try{r.abort()}catch(e){}}}
 function listen(lang,c,alive,maxWait){
   return new Promise(res=>{
@@ -99,7 +100,7 @@ function listen(lang,c,alive,maxWait){
     const t0=Date.now();
     const fin=x=>{if(done)return;done=true;clearInterval(iv);const mine=r;r=null;if(mine){if(rec.r===mine)rec.r=null;try{mine.abort()}catch(e){}}res(x)};
     const evalNow=()=>{
-      $("vHeard").textContent=heard[0]?`Gehört: „${heard[0]}“`:"";
+      $(rec.ui.heard).textContent=heard[0]?`Gehört: „${heard[0]}“`:"";
       if(!heard.length||!c)return;
       if(matches(heard,c))return fin({ok:true,heard});
       const cmd=command(heard); if(cmd)return fin({cmd,heard});
@@ -348,18 +349,32 @@ function stopVoice(){
   try{vm.lock&&vm.lock.release()}catch(e){};vm.lock=null;
   vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
 }
-// Mikro-Test: hört 6 Sekunden auf Deutsch zu und zeigt an, was ankommt
+// Mikro-Test (in den Einstellungen): hört 6 Sekunden auf Deutsch zu und zeigt an, was ankommt
+function setTest(t,cls){$("sStatus").textContent=t;$("sStatus").className="vstatus "+(cls||"")}
 async function micTest(){
-  if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
+  if(!SR){setTest("Dieses Gerät hat keine Spracherkennung.","bad");return}
   if(vm.on)stopVoice();
   try{tts&&tts.cancel()}catch(e){}
-  const my=++vm.token, alive=()=>my===vm.token;
-  vmSet("🎙️ Test: Sag etwas auf Deutsch …","listen");diag("");$("vHeard").textContent="";
-  const r=await listen("de",null,alive,6000); if(!alive())return;
-  if(r.denied)vmSet(r.err==="service-not-allowed"?"Spracherkennung gesperrt (Siri & Diktieren aus oder Home-Bildschirm-App).":"Mikrofon nicht erlaubt.","bad");
-  else if(r.heard&&r.heard.length){rec.denied=false;vmSet("✓ Mikro funktioniert","good")}
-  else{vmSet("✗ Nichts gehört","bad");diag(noMicHint())}
+  const my=++vm.token, alive=()=>my===vm.token&&!$("settings").hidden;
+  rec.ui={heard:"sHeard",diag:"sDiag"};
+  setTest("🎙️ Sag etwas auf Deutsch …","listen");diag("");$("sHeard").textContent="";
+  $("sTest").disabled=true;
+  const r=await listen("de",null,alive,6000);
+  $("sTest").disabled=false;
+  if(alive()){
+    if(r.denied)setTest(r.err==="service-not-allowed"?"Spracherkennung gesperrt (Siri & Diktieren aus oder Home-Bildschirm-App).":"Mikrofon nicht erlaubt.","bad");
+    else if(r.heard&&r.heard.length){rec.denied=false;setTest("✓ Mikro funktioniert","good")}
+    else{setTest("✗ Nichts gehört","bad");diag(noMicHint())}
+  }
+  rec.ui={heard:"vHeard",diag:"vDiag"};
 }
+function openSettings(){
+  setTest(SR?"Tippe auf „Mikro testen“ und sag etwas.":"Dieses Gerät hat keine Spracherkennung.");
+  $("sHeard").textContent="";$("sDiag").textContent=tts?voiceInfo():"";
+  $("home").hidden=true;$("settings").hidden=false;
+}
+function closeSettings(){vm.token++;$("sTest").disabled=false;rec.ui={heard:"vHeard",diag:"vDiag"};show("home")}
+
 function openVoice(){
   vm.ok=0;vm.no=0;vmStats();
   $("vmName").textContent=CHAPTERS[chap].name;
@@ -375,7 +390,9 @@ $("voiceBtn").addEventListener("click",openVoice);
 $("vStart").addEventListener("click",startVoice);
 $("vPause").addEventListener("click",stopVoice);
 $("vBack").addEventListener("click",closeVoice);
-$("vTest").addEventListener("click",micTest);
+$("sTest").addEventListener("click",micTest);
+$("settingsBtn").addEventListener("click",openSettings);
+$("sBack").addEventListener("click",closeSettings);
 $("vMic").addEventListener("click",()=>{
   if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
   vm.mic=!vm.mic;try{localStorage.setItem("verbos-mic",vm.mic?"1":"0")}catch(e){}

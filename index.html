@@ -150,7 +150,11 @@ h1 span{color:var(--sol)}
 .vbig{grid-column:1/-1;font-size:1.3rem;padding:26px 10px}
 .vmicbtn{grid-column:1/-1;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .vmicbtn[aria-pressed="true"]{border-color:var(--azul);color:var(--azul)}
-.vtest{font-size:.9rem;padding:10px}
+.gear{font-size:1.25rem;line-height:1;background:none;border:1px solid var(--line);border-radius:999px;width:38px;height:38px;padding:0;color:var(--muted);flex:0 0 auto}
+.home-title{flex:1;min-width:0}
+.sbox{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.sbox h2{font-family:var(--f-display);font-size:1.1rem;margin:0}
+.sbox p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.45}
 .vdiag{color:var(--muted);font-size:.8rem;line-height:1.4;text-align:center;min-height:1em}
 .vdiag:empty{display:none}
 .vtip{margin:0;color:var(--muted);font-size:.82rem;line-height:1.45;text-align:center}
@@ -161,7 +165,7 @@ h1 span{color:var(--sol)}
 <body>
 
 <div class="app" id="home">
-  <header><h1>Español <span>¡ya!</span></h1><button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button></header>
+  <header><button class="gear" id="settingsBtn" type="button" aria-label="Einstellungen">⚙️</button><h1 class="home-title">Español <span>¡ya!</span></h1><button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button></header>
   <div class="voiceRow" id="voiceRow" hidden>
     <label>Stimme</label>
     <div class="row">
@@ -273,10 +277,25 @@ h1 span{color:var(--sol)}
     <button class="btn show vbig" id="vStart" type="button">▶ Start</button>
     <button class="btn no vbig" id="vPause" type="button" hidden>⏸ Pause</button>
     <button class="btn vmicbtn" id="vMic" type="button" aria-pressed="true">🎙️ Mikrofon an</button>
-    <button class="btn vmicbtn vtest" id="vTest" type="button">🧪 Mikro testen</button>
   </div>
   <div class="vdiag" id="vDiag"></div>
-  <p class="vtip">Sag „nochmal“, um das Wort erneut zu hören, „weiß nicht“ zum Überspringen und „Stopp“ zum Anhalten.</p>
+  <p class="vtip">Mikro geht nicht? Teste es über ⚙️ Einstellungen auf der Startseite. Sag „nochmal“, um das Wort erneut zu hören, „weiß nicht“ zum Überspringen und „Stopp“ zum Anhalten.</p>
+</div>
+
+<div class="app" id="settings" hidden>
+  <header>
+    <button class="ghost" id="sBack" type="button">‹ Zurück</button>
+    <span class="chname">Einstellungen</span>
+    <span style="width:60px"></span>
+  </header>
+  <div class="sbox">
+    <h2>🎙️ Mikrofon testen</h2>
+    <p>Prüft, ob die Spracherkennung für den Sprachmodus funktioniert. Tippe auf den Knopf und sag etwas auf Deutsch.</p>
+    <div class="vstatus" id="sStatus" role="status" aria-live="polite"></div>
+    <div class="vheard" id="sHeard"></div>
+    <button class="btn show" id="sTest" type="button">🧪 Mikro testen</button>
+    <div class="vdiag" id="sDiag"></div>
+  </div>
 </div>
 
 <script>
@@ -559,7 +578,7 @@ function check(){
   revealed=true;render();$("nextBtn").focus();
   if(sound)speakCurrent();
 }
-function show(view){$("home").hidden=view!=="home";$("train").hidden=view!=="train";$("voice").hidden=true;if(view==="home")renderHome()}
+function show(view){$("home").hidden=view!=="home";$("train").hidden=view!=="train";$("voice").hidden=true;$("settings").hidden=true;if(view==="home")renderHome()}
 function openChapter(ch){
   if(ch!==chap){chap=ch;cur=-1;recent=[]}
   $("chname").textContent=CHAPTERS[ch].name;
@@ -700,7 +719,8 @@ function playSfx(name){
 // Zwischenergebnisse werden sofort ausgewertet, auf ein „fertiges“ Ergebnis wird nicht gewartet.
 const rec={r:null,denied:false,silentRun:0,everHeard:false};
 const standalone=window.navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
-function diag(t){$("vDiag").textContent=t||""}
+rec.ui={heard:"vHeard",diag:"vDiag"};
+function diag(t){$(rec.ui.diag).textContent=t||""}
 function recAbort(){const r=rec.r;rec.r=null;if(r){try{r.abort()}catch(e){}}}
 function listen(lang,c,alive,maxWait){
   return new Promise(res=>{
@@ -708,7 +728,7 @@ function listen(lang,c,alive,maxWait){
     const t0=Date.now();
     const fin=x=>{if(done)return;done=true;clearInterval(iv);const mine=r;r=null;if(mine){if(rec.r===mine)rec.r=null;try{mine.abort()}catch(e){}}res(x)};
     const evalNow=()=>{
-      $("vHeard").textContent=heard[0]?`Gehört: „${heard[0]}“`:"";
+      $(rec.ui.heard).textContent=heard[0]?`Gehört: „${heard[0]}“`:"";
       if(!heard.length||!c)return;
       if(matches(heard,c))return fin({ok:true,heard});
       const cmd=command(heard); if(cmd)return fin({cmd,heard});
@@ -957,18 +977,32 @@ function stopVoice(){
   try{vm.lock&&vm.lock.release()}catch(e){};vm.lock=null;
   vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
 }
-// Mikro-Test: hört 6 Sekunden auf Deutsch zu und zeigt an, was ankommt
+// Mikro-Test (in den Einstellungen): hört 6 Sekunden auf Deutsch zu und zeigt an, was ankommt
+function setTest(t,cls){$("sStatus").textContent=t;$("sStatus").className="vstatus "+(cls||"")}
 async function micTest(){
-  if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
+  if(!SR){setTest("Dieses Gerät hat keine Spracherkennung.","bad");return}
   if(vm.on)stopVoice();
   try{tts&&tts.cancel()}catch(e){}
-  const my=++vm.token, alive=()=>my===vm.token;
-  vmSet("🎙️ Test: Sag etwas auf Deutsch …","listen");diag("");$("vHeard").textContent="";
-  const r=await listen("de",null,alive,6000); if(!alive())return;
-  if(r.denied)vmSet(r.err==="service-not-allowed"?"Spracherkennung gesperrt (Siri & Diktieren aus oder Home-Bildschirm-App).":"Mikrofon nicht erlaubt.","bad");
-  else if(r.heard&&r.heard.length){rec.denied=false;vmSet("✓ Mikro funktioniert","good")}
-  else{vmSet("✗ Nichts gehört","bad");diag(noMicHint())}
+  const my=++vm.token, alive=()=>my===vm.token&&!$("settings").hidden;
+  rec.ui={heard:"sHeard",diag:"sDiag"};
+  setTest("🎙️ Sag etwas auf Deutsch …","listen");diag("");$("sHeard").textContent="";
+  $("sTest").disabled=true;
+  const r=await listen("de",null,alive,6000);
+  $("sTest").disabled=false;
+  if(alive()){
+    if(r.denied)setTest(r.err==="service-not-allowed"?"Spracherkennung gesperrt (Siri & Diktieren aus oder Home-Bildschirm-App).":"Mikrofon nicht erlaubt.","bad");
+    else if(r.heard&&r.heard.length){rec.denied=false;setTest("✓ Mikro funktioniert","good")}
+    else{setTest("✗ Nichts gehört","bad");diag(noMicHint())}
+  }
+  rec.ui={heard:"vHeard",diag:"vDiag"};
 }
+function openSettings(){
+  setTest(SR?"Tippe auf „Mikro testen“ und sag etwas.":"Dieses Gerät hat keine Spracherkennung.");
+  $("sHeard").textContent="";$("sDiag").textContent=tts?voiceInfo():"";
+  $("home").hidden=true;$("settings").hidden=false;
+}
+function closeSettings(){vm.token++;$("sTest").disabled=false;rec.ui={heard:"vHeard",diag:"vDiag"};show("home")}
+
 function openVoice(){
   vm.ok=0;vm.no=0;vmStats();
   $("vmName").textContent=CHAPTERS[chap].name;
@@ -984,7 +1018,9 @@ $("voiceBtn").addEventListener("click",openVoice);
 $("vStart").addEventListener("click",startVoice);
 $("vPause").addEventListener("click",stopVoice);
 $("vBack").addEventListener("click",closeVoice);
-$("vTest").addEventListener("click",micTest);
+$("sTest").addEventListener("click",micTest);
+$("settingsBtn").addEventListener("click",openSettings);
+$("sBack").addEventListener("click",closeSettings);
 $("vMic").addEventListener("click",()=>{
   if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
   vm.mic=!vm.mic;try{localStorage.setItem("verbos-mic",vm.mic?"1":"0")}catch(e){}

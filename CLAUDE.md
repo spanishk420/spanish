@@ -26,7 +26,7 @@ Fortschritt nur in localStorage (`verbos-v2`). Gewichtung: niedriges Level und h
 - Stimme soll menschlich klingen: Premium-Stimmen werden bevorzugt (voiceTier), Hinweis zum Laden in iOS-Einstellungen. Externe Neural-TTS (edge-tts, Piper-Download) war aus dem Container nicht erreichbar.
 - Erkennung tolerant (z. B. „abla“/„habla“ = hablar), aber ähnliche falsche Wörter ablehnen (ver ≠ beber, correr ≠ comer).
 - TTS: Nutzer meldete deutsche Stimme für spanische Wörter → Stimme wird jetzt immer explizit gesetzt und frisch aus getVoices() geholt (iOS liefert die Liste verzögert); erstes speak() synchron im Start-Tipp.
-- Diagnose im Sprachmodus: Zeile mit gewählten Stimmen / Mikro-Fehlern, Knopf „🧪 Mikro testen“. Nach 2 stillen Runden Hinweis (Home-Bildschirm-App vs. Safari, Siri & Diktieren).
+- Diagnose: im Sprachmodus Zeile mit Stimmen / Mikro-Fehlern; „🧪 Mikro testen“ in ⚙️ Einstellungen (Zahnrad oben links auf der Startseite, Ansicht #settings in build.py). Nach 2 stillen Runden Hinweis (Home-Bildschirm-App vs. Safari, Siri & Diktieren).
 - Offen: Bestätigung auf echtem iPhone, v. a. ob Erkennung in der Home-Bildschirm-App geht.
 
 ## Privatsphäre
