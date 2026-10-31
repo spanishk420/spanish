@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Español ¡ya!</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1F4C9A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Español">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+body{margin:0;font-size:16px;line-height:1.35}
+[hidden]{display:none!important}
+/* Layout: two views. Chapter overview (list of chapters with progress) → one-screen flashcard trainer */
+:root{
+  --bg:#EEF2F7; --surface:#FFFFFF; --ink:#16233A; --muted:#5D6B82;
+  --azul:#1F4C9A; --azul-soft:#DCE6F6; --sol:#E3A21A; --sol-soft:#FBEFD3;
+  --ok:#1E8A5A; --ok-soft:#DDF2E7; --no:#C2412D; --no-soft:#F8E1DC;
+  --line:#D5DDE8;
+  --f-display:"Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1624; --surface:#18233A; --ink:#EAF0FA; --muted:#9AA8C0;
+  --azul:#8DB0F0; --azul-soft:#22345A; --sol:#F0B940; --sol-soft:#3A2F16;
+  --ok:#5CCB93; --ok-soft:#173A2B; --no:#F08672; --no-soft:#3E211C; --line:#2A3A58; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1624; --surface:#18233A; --ink:#EAF0FA; --muted:#9AA8C0;
+  --azul:#8DB0F0; --azul-soft:#22345A; --sol:#F0B940; --sol-soft:#3A2F16;
+  --ok:#5CCB93; --ok-soft:#173A2B; --no:#F08672; --no-soft:#3E211C; --line:#2A3A58; color-scheme:dark}
+
+html,body{height:100%}
+html{height:100dvh}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;-webkit-tap-highlight-color:transparent}
+.app{height:100%;display:flex;flex-direction:column;gap:14px;max-width:520px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;box-sizing:border-box}
+button{font:inherit;cursor:pointer}
+button:focus-visible,.card:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:1.35rem;margin:0;letter-spacing:-.01em}
+h1 span{color:var(--sol)}
+.ghost{font-size:.8rem;color:var(--muted);background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.chname{font-family:var(--f-display);font-weight:800;font-size:1.05rem;flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hgroup{display:flex;gap:8px;align-items:center}
+.sound{font-size:.8rem;font-weight:700;border-radius:999px;padding:6px 12px;border:1px solid var(--line);background:none;color:var(--muted);white-space:nowrap}
+.sound[aria-pressed="true"]{background:var(--azul-soft);color:var(--azul);border-color:var(--azul)}
+.wipe{align-self:center;margin-top:auto;font-size:.85rem;color:var(--no);background:none;border:1px solid var(--no-soft);border-radius:999px;padding:10px 18px}
+.wipe.armed{background:var(--no);color:var(--surface);border-color:var(--no)}
+.voiceRow{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.voiceRow label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.voiceRow .row{display:flex;gap:8px}
+.voiceRow .row{align-items:stretch}
+.vbtn{flex:0 0 48px;font-size:1.4rem;font-weight:700;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--azul)}
+.vbtn:disabled{opacity:.4}
+.vname{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:6px 8px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.vname b{font-size:.95rem;overflow-wrap:anywhere}
+.vname small{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.voiceRow p{margin:0;font-size:.8rem;color:var(--muted);line-height:1.4}
+.say{border:0;background:var(--azul-soft);color:var(--azul);border-radius:999px;padding:6px 14px;font-weight:700;font-size:.85rem}
+
+/* Kapitelübersicht */
+.intro{color:var(--muted);margin:0;line-height:1.45}
+.chapters{display:flex;flex-direction:column;gap:10px}
+.chapter{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;background:var(--surface);
+  border:1px solid var(--line);border-radius:18px;padding:16px;text-align:left;color:var(--ink);width:100%}
+.chapter .num{font-family:var(--f-display);font-weight:800;font-size:1.6rem;color:var(--azul);width:2ch;text-align:center}
+.chapter h2{font-family:var(--f-display);font-size:1.2rem;margin:0 0 2px}
+.chapter p{margin:0;font-size:.85rem;color:var(--muted)}
+.chapter .mini{height:5px;border-radius:9px;background:var(--line);margin-top:8px;overflow:hidden}
+.chapter .mini i{display:block;height:100%;background:var(--ok);width:0}
+.chapter .go{font-weight:700;color:var(--azul);font-size:1.4rem}
+.chapter[disabled]{opacity:.5;cursor:default}
+.chapter[disabled] .num{color:var(--muted)}
+.dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.dots i{width:9px;height:9px;border-radius:50%;border:1px solid var(--line)}
+.soon{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 8px}
+
+/* Trainer */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.stat b{display:block;font-family:var(--f-display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.stat small{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat.ok b{color:var(--ok)} .stat.no b{color:var(--no)}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+
+.card{flex:1;min-height:260px;background:var(--surface);border-radius:22px;border:1px solid var(--line);
+  box-shadow:0 10px 30px -18px rgba(22,35,58,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:40px 20px 24px;cursor:pointer;position:relative;user-select:none;gap:10px}
+.tag{position:absolute;top:14px;left:16px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tag.rev{color:var(--sol)}
+.box{position:absolute;top:14px;right:16px;display:flex;gap:4px}
+.box i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.box i.on{background:var(--sol)}
+.miss{font-size:.75rem;color:var(--no);background:var(--no-soft);border-radius:99px;padding:3px 10px}
+.swatch{width:84px;height:84px;border-radius:50%;border:3px solid var(--line);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.q{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,9vw,2.8rem);line-height:1.05;text-wrap:balance}
+.q.es{color:var(--azul)}
+.note{color:var(--muted);font-size:.95rem}
+.hint{margin-top:18px;color:var(--azul);font-weight:700;font-size:.95rem}
+.answer{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;margin-top:10px;padding-top:16px;border-top:2px dashed var(--line)}
+.a{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,10vw,3rem);line-height:1.05;text-wrap:balance}
+.a.es{color:var(--azul)}
+.mnemo{background:var(--azul-soft);border-radius:12px;padding:10px 14px;font-size:.95rem;max-width:34ch;line-height:1.4}
+.mnemo::before{content:"Eselsbrücke";font-weight:700;display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--azul);margin-bottom:2px}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font-weight:700;font-size:1.05rem;border:0;border-radius:16px;padding:18px 10px}
+.btn.no{background:var(--no-soft);color:var(--no)}
+.btn.ok{background:var(--ok-soft);color:var(--ok)}
+.btn.show{grid-column:1/-1;background:var(--azul);color:var(--surface)}
+.btn:active{transform:scale(.98)}
+/* Zahlen: kompakte Karte, damit das Eingabefeld ohne Scrollen sichtbar ist */
+#train.compact .card{flex:0 0 auto;min-height:0;padding:34px 16px 16px;gap:8px}
+#train.compact .q{font-size:clamp(2.4rem,12vw,3.2rem)}
+#train.compact .answer{margin-top:4px;padding-top:10px;gap:8px}
+#train.compact .a{font-size:clamp(1.6rem,8vw,2.2rem)}
+#train.compact .mnemo{font-size:.88rem;padding:8px 12px}
+.btn.next{grid-column:1/-1;background:var(--azul);color:var(--surface)}
+.typeForm{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:10px}
+.typeForm input{font:inherit;font-size:1.15rem;min-width:0;padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.typeForm input:focus{outline:none;border-color:var(--azul)}
+.typeForm .btn{padding-inline:22px}
+.verdict{font-weight:700;border-radius:12px;padding:8px 14px;font-size:.95rem}
+.verdict.good{background:var(--ok-soft);color:var(--ok)}
+.verdict.bad{background:var(--no-soft);color:var(--no)}
+.yours{color:var(--muted);font-size:.9rem}
+.yours s{color:var(--no)}
+
+/* Sprachmodus */
+.mic{font-size:.95rem;font-weight:700;border-radius:14px;padding:12px;border:0;background:var(--azul);color:var(--surface);white-space:nowrap}
+.vcard{flex:1;min-height:220px;background:var(--surface);border-radius:22px;border:1px solid var(--line);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:40px 20px 24px;position:relative;gap:12px}
+.vstatus{font-weight:700;font-size:1.05rem;border-radius:14px;padding:12px 16px;background:var(--azul-soft);color:var(--azul);text-align:center;line-height:1.35}
+.vstatus.listen{background:var(--sol-soft);color:var(--ink);animation:pulse 1.4s ease-in-out infinite}
+.vstatus.good{background:var(--ok-soft);color:var(--ok)}
+.vstatus.bad{background:var(--no-soft);color:var(--no)}
+@keyframes pulse{50%{box-shadow:0 0 0 6px var(--sol-soft)}}
+.vheard{color:var(--muted);font-size:.95rem;min-height:1.3em}
+.vbig{grid-column:1/-1;font-size:1.3rem;padding:26px 10px}
+.vmicbtn{grid-column:1/-1;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.vmicbtn[aria-pressed="true"]{border-color:var(--azul);color:var(--azul)}
+.vtip{margin:0;color:var(--muted);font-size:.82rem;line-height:1.45;text-align:center}
+@media (prefers-reduced-motion:reduce){.vstatus.listen{animation:none}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}.btn:active{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="app" id="home">
+  <header><h1>Español <span>¡ya!</span></h1><button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button></header>
+  <div class="voiceRow" id="voiceRow" hidden>
+    <label>Stimme</label>
+    <div class="row">
+      <button class="vbtn" id="vPrev" type="button" aria-label="Vorherige Stimme">‹</button>
+      <div class="vname"><b id="vName">…</b><small id="vCount"></small></div>
+      <button class="vbtn" id="vNext" type="button" aria-label="Nächste Stimme">›</button>
+    </div>
+    <button class="say" id="voiceTest" type="button">▶ Stimme testen</button>
+    <p id="voiceTip">Die beste Stimme ist schon ausgewählt. Klingt sie roboterhaft, lade in den Handy-Einstellungen eine bessere spanische Stimme herunter.</p>
+  </div>
+  <p class="intro">Wähl ein Kapitel. Jedes Wort wird in beide Richtungen abgefragt, und was du oft nicht weißt, kommt öfter dran. Im Kapitel startest du mit <b>🎙️ Sprechen</b> den Sprachmodus, ganz ohne Tippen.</p>
+  <div class="chapters">
+    <button class="chapter" id="ch-verbs" type="button">
+      <span class="num">1</span>
+      <span><h2>Verben</h2><p class="info"></p><div class="mini"><i></i></div></span>
+      <span class="go" aria-hidden="true">›</span>
+    </button>
+    <button class="chapter" id="ch-colors" type="button">
+      <span class="num">2</span>
+      <span><h2>Farben simpel <span class="dots" aria-hidden="true"><i style="background:#D62B2B"></i><i style="background:#F2C21B"></i><i style="background:#2E8B3E"></i><i style="background:#2457C5"></i></span></h2><p class="info"></p><div class="mini"><i></i></div></span>
+      <span class="go" aria-hidden="true">›</span>
+    </button>
+    <button class="chapter" id="ch-colors2" type="button">
+      <span class="num">3</span>
+      <span><h2>Weitere Farben <span class="dots" aria-hidden="true"><i style="background:#7B3FA0"></i><i style="background:#1FB5A8"></i><i style="background:#C9971C"></i><i style="background:#A8A8A8"></i></span></h2><p class="info"></p><div class="mini"><i></i></div></span>
+      <span class="go" aria-hidden="true">›</span>
+    </button>
+    <button class="chapter" id="ch-numbers" type="button">
+      <span class="num">4</span>
+      <span><h2>Zahlen</h2><p class="info"></p><div class="mini"><i></i></div></span>
+      <span class="go" aria-hidden="true">›</span>
+    </button>
+    <button class="chapter" type="button" disabled>
+      <span class="num">5</span>
+      <span><h2>Konjugation</h2><p>yo, tú, él … im Präsens</p></span>
+      <span class="soon">bald</span>
+    </button>
+    <button class="chapter" type="button" disabled>
+      <span class="num">6</span>
+      <span><h2>Alltagssätze</h2><p>¿Qué haces?, No sé …</p></span>
+      <span class="soon">bald</span>
+    </button>
+  </div>
+  <button class="wipe" id="wipe" type="button">Gesamten Fortschritt zurücksetzen</button>
+</div>
+
+<div class="app" id="train" hidden>
+  <header>
+    <button class="ghost" id="back" type="button">‹ Kapitel</button>
+    <span class="chname" id="chname"></span>
+    <span class="hgroup">
+      <button class="sound" id="soundTrain" type="button" aria-pressed="false">🔇</button>
+      <button class="ghost" id="reset" type="button">Neu starten</button>
+    </span>
+  </header>
+  <button class="mic" id="voiceBtn" type="button">🎙️ Sprachmodus: sprechen statt tippen</button>
+  <div class="stats">
+    <div class="stat"><b id="sKnown">0</b><small>Karten sitzen</small></div>
+    <div class="stat ok"><b id="sOk">0</b><small>gewusst</small></div>
+    <div class="stat no"><b id="sNo">0</b><small>nicht gewusst</small></div>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+
+  <div class="card" id="card" tabindex="0" role="button" aria-label="Karte aufdecken">
+    <div class="tag" id="tag"></div>
+    <div class="box" id="box" aria-hidden="true"></div>
+    <div class="miss" id="miss" hidden></div>
+    <div class="swatch" id="swQ" hidden></div>
+    <div class="q" id="q"></div>
+    <div class="note" id="note"></div>
+    <div class="hint" id="hint">Antippen zum Auflösen</div>
+    <div class="answer" id="answer" hidden>
+      <div class="verdict" id="verdict" hidden></div>
+      <div class="swatch" id="swA" hidden></div>
+      <div class="a" id="a"></div>
+      <button class="say" id="say" type="button" hidden>🔊 Nochmal anhören</button>
+      <div class="yours" id="yours" hidden></div>
+      <div class="mnemo" id="mnemo"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <form class="typeForm" id="typeForm" hidden autocomplete="off">
+      <input id="inp" type="text" aria-label="Zahl auf Spanisch" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Auf Spanisch schreiben …">
+      <button class="btn show" type="submit">Prüfen</button>
+    </form>
+    <button class="btn next" id="nextBtn" type="button" hidden>Weiter ›</button>
+    <button class="btn show" id="show" type="button">Auflösen</button>
+    <button class="btn no" id="no" type="button" hidden>✗ Wusste ich nicht</button>
+    <button class="btn ok" id="ok" type="button" hidden>✓ Wusste ich</button>
+  </div>
+</div>
+
+<div class="app" id="voice" hidden>
+  <header>
+    <button class="ghost" id="vBack" type="button">‹ Beenden</button>
+    <span class="chname" id="vmName"></span>
+    <span class="hgroup"><span class="stat ok" style="padding:4px 10px"><b id="vOk" style="font-size:1rem">0</b></span><span class="stat no" style="padding:4px 10px"><b id="vNo" style="font-size:1rem">0</b></span></span>
+  </header>
+  <div class="vcard">
+    <div class="tag" id="vTag"></div>
+    <div class="swatch" id="vSw" hidden></div>
+    <div class="q" id="vQ">Bereit?</div>
+    <div class="answer" id="vAns" hidden><div class="a" id="vA"></div></div>
+    <div class="vheard" id="vHeard"></div>
+  </div>
+  <div class="vstatus" id="vStatus" role="status" aria-live="polite"></div>
+  <div class="actions">
+    <button class="btn show vbig" id="vStart" type="button">▶ Start</button>
+    <button class="btn no vbig" id="vPause" type="button" hidden>⏸ Pause</button>
+    <button class="btn vmicbtn" id="vMic" type="button" aria-pressed="true">🎙️ Mikrofon an</button>
+  </div>
+  <p class="vtip">Sag „nochmal“, um das Wort erneut zu hören, „weiß nicht“ zum Überspringen und „Stopp“ zum Anhalten.</p>
+</div>
+
+<script>
+// Einträge: [Deutsch, Spanisch, Hinweis, Eselsbrücke, Startlevel 0–4, Farbe (nur Farben)]
+const CHAPTERS = {
+  verbs:{name:"Verben", unit:"Verben", prefix:"", items:[
+    ["sein","ser","dauerhaft, z. B. „ich bin Deutscher“","Ser bleibt, wie man ist: Eigenschaften, Herkunft, Beruf.",2],
+    ["essen","comer","","Denk an „Komm essen!“ → comer.",3],
+    ["haben","tener","besitzen","Tengo un coche = Ich habe ein Auto.",3],
+    ["gehen","ir","","Nur zwei Buchstaben: ir. Vamos = Wir gehen!",1],
+    ["trinken","beber","","Bebida = Getränk.",2],
+    ["machen / tun","hacer","","¿Qué haces? = Was machst du? Das h ist stumm.",0],
+    ["sprechen","hablar","","Hablo español = Ich spreche Spanisch.",3],
+    ["wollen","querer","","Kinder quengeln, wenn sie was wollen. Grundform ohne i!",1],
+    ["können","poder","","Wer aufs Podium darf, kann was.",1],
+    ["sehen","ver","","Etwas mit den Augen verfolgen.",1],
+    ["kommen","venir","","Komm mit nach Venedig!",2],
+    ["sagen","decir","","Beim Diktat sagt der Lehrer was an. (Sprechen = hablar)",0],
+    ["wissen","saber","","No sé = Ich weiß nicht.",0],
+    ["geben","dar","","Wenn man was gibt, sagt man „Da, bitte!“",0],
+    ["lernen","aprender","","Aprendo español = Ich lerne Spanisch.",0],
+    ["kaufen","comprar","","Vor dem Kaufen Preise vergleichen, englisch compare.",0],
+    ["öffnen","abrir","","Abrakadabra, und die Tür öffnet sich.",0],
+    ["laufen / rennen","correr","","Ein Kurier rennt mit dem Paket. Endung -er!",1],
+    ["schlafen","dormir","","Dornröschen schläft 100 Jahre.",1],
+    ["hören","escuchar","","Escucha = Hör zu! (Sehen = ver)",2],
+    ["arbeiten","trabajar","","Trabajo = Arbeit.",3],
+    ["schreiben","escribir","","Klingt wie „Skribent“, einer der schreibt.",3],
+    ["wohnen / leben","vivir","","Vivo en Berlín = Ich wohne in Berlin.",3],
+    ["tanzen","bailar","","Ballett → bailar.",3],
+    ["verstehen","comprender","","Komprimiert erklärt, sofort verstanden.",3],
+    ["finden","encontrar","","Englisch encounter = jemandem begegnen.",0],
+    ["nehmen","tomar","","Tomaten nimmt man vom Markt mit.",0],
+    ["brauchen","necesitar","","Necessary (englisch) = notwendig.",0],
+    ["suchen","buscar","","Im Busch suchen.",0],
+    ["warten / hoffen","esperar","","Espresso? Darauf warte ich gern.",0]
+  ]},
+  colors:{name:"Farben simpel", unit:"Farben", prefix:"f:", items:[
+    ["rot","rojo","","Rouge auf den Lippen ist rojo. Wie „rot“ mit j.",1,"#D62B2B"],
+    ["blau","azul","","Die Côte d'Azur hat blaues Meer.",1,"#2457C5"],
+    ["gelb","amarillo","","In amarillo steckt Marille, eine gelbe Aprikose.",0,"#F2C21B"],
+    ["grün","verde","","Kap Verde = das grüne Kap.",1,"#2E8B3E"],
+    ["schwarz","negro","","Das Schwarze Meer heißt Mar Negro.",1,"#1A1A1A"],
+    ["weiß","blanco","","Ein Blanko-Blatt ist weiß und leer.",1,"#FFFFFF"],
+    ["grau","gris","","Ein Griesgram sieht alles grau.",0,"#8C8C8C"],
+    ["braun","marrón","","Maronen sind braun.",0,"#7A4A23"],
+    ["orange","naranja","","Naranja ist auch die Frucht Orange.",0,"#F07A1A"],
+    ["rosa","rosa","","Gleich wie im Deutschen!",2,"#F29BC0"]
+  ]},
+  colors2:{name:"Weitere Farben", unit:"Wörter", prefix:"f:", items:[
+    ["die Farbe","el color","","Fast wie im Deutschen: Color. Achtung, auf Spanisch männlich!",1,"conic-gradient(#D62B2B,#F2C21B,#2E8B3E,#2457C5,#7B3FA0,#D62B2B)"],
+    ["lila","morado","","Mora heißt Brombeere, und die macht lila Flecken.",0,"#7B3FA0"],
+    ["türkis","turquesa","","Klingt fast gleich: turquesa.",1,"#1FB5A8"],
+    ["beige","beige","","Gleich wie im Deutschen!",2,"#D9C7A3"],
+    ["golden","dorado","","El Dorado, die goldene Stadt.",0,"linear-gradient(135deg,#F5D76E,#C9971C)"],
+    ["silbern","plateado","","Plata heißt Silber, wie Platin.",0,"linear-gradient(135deg,#F0F0F0,#A8A8A8)"],
+    ["hellblau","celeste","","Celeste = himmlisch, wie der Himmel.",0,"#8EC9F0"],
+    ["hell","claro","z. B. azul claro","Klar und hell. Azul claro = hellblau.",0,"linear-gradient(90deg,#9FC0F5,#E6EEFC)"],
+    ["dunkel","oscuro","z. B. verde oscuro","Im Dunkeln ist es obskur. Verde oscuro = dunkelgrün.",0,"linear-gradient(90deg,#1F5A2C,#0C2412)"]
+  ]}
+};
+// Zahlen 0–100 plus 200, 500, 1000. Einzelne Zahlen und Zehner starten unsicher, zusammengesetzte (z. B. 47) etwas seltener.
+CHAPTERS.numbers={name:"Zahlen", unit:"Zahlen", prefix:"n:", mode:"type", items:(()=>{
+  const U=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve"];
+  const T={3:"treinta",4:"cuarenta",5:"cincuenta",6:"sesenta",7:"setenta",8:"ochenta",9:"noventa"};
+  const out=[];
+  const add=(n,w,tip,lv)=>out.push([n.toLocaleString("de-DE"),w,"",tip,lv]);
+  for(let n=0;n<=100;n++){
+    let w,tip,lv=0;
+    if(n<30)w=U[n]; else if(n===100)w="cien"; else w=T[Math.floor(n/10)]+(n%10?" y "+U[n%10]:"");
+    if(n===1)tip="uno, vor einem Nomen un: un café.";
+    else if(n<=10)tip="Grundzahl, die lernt man auswendig.";
+    else if(n<=15)tip="11 bis 15 sind eigene Wörter: once, doce, trece, catorce, quince.";
+    else if(n<=19)tip="16 bis 19: dieci + Einer, alles in einem Wort.";
+    else if(n===20)tip="veinte, und ab 21 wird daraus veinti…";
+    else if(n<30)tip="21 bis 29: veinti + Einer, alles in einem Wort.";
+    else if(n===100)tip="Genau 100 = cien. Ab 101 heißt es ciento: ciento uno.";
+    else if(n%10===0)tip="Die Zehner ab 30 enden auf -nta: treinta, cuarenta, cincuenta …";
+    else{tip=`Zehner + y + Einer, getrennt geschrieben: ${T[Math.floor(n/10)]} y ${U[n%10]}.`;lv=2}
+    add(n,w,tip,lv);
+  }
+  add(200,"doscientos","dos + cientos, ein Wort.",0);
+  add(500,"quinientos","Ausnahme! Nicht cincocientos, sondern quinientos.",0);
+  add(1000,"mil","Ganz kurz: mil. 2000 = dos mil.",0);
+  return out;
+})()};
+
+// Karten: jeder Eintrag × Richtung (de = Deutsch→Spanisch, es = Spanisch→Deutsch); Zahlen nur Zahl→Wort
+const DECKS = {};
+for(const [key,ch] of Object.entries(CHAPTERS)){
+  DECKS[key]=ch.mode==="type"
+    ? ch.items.map((v,i)=>({i,dir:"num",id:ch.prefix+v[0]}))
+    : ch.items.flatMap((v,i)=>[{i,dir:"de",id:ch.prefix+v[1]+"|de"},{i,dir:"es",id:ch.prefix+v[1]+"|es"}]);
+}
+const typeMode=()=>CHAPTERS[chap].mode==="type";
+let verdict=null;
+const norm=s=>s.toLowerCase().trim().replace(/\s+/g," ");
+const plain=s=>norm(s).normalize("NFD").replace(/[̀-ͯ]/g,"");
+const KEY="verbos-v2";
+let state, chap="verbs", cur=-1, recent=[], revealed=false;
+
+function initCard(s,ch,c){const lv=CHAPTERS[ch].items[c.i][4];s.c[c.id]={lv:c.dir==="es"?Math.min(lv+1,4):lv,miss:0}}
+function load(){
+  let s=null;
+  try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!s||!s.c){
+    s={c:{},st:{}};
+    try{const o=JSON.parse(localStorage.getItem("verbos-v1"));if(o&&o.lv)Object.entries(o.lv).forEach(([k,lv])=>{s.c[k+"|de"]={lv,miss:0}});}catch(e){}
+  }
+  if(!s.st){s.st={verbs:{ok:s.ok||0,no:s.no||0}};delete s.ok;delete s.no}
+  for(const ch in DECKS){
+    if(!s.st[ch])s.st[ch]={ok:0,no:0};
+    DECKS[ch].forEach(c=>{if(!s.c[c.id])initCard(s,ch,c)});
+  }
+  return s;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+const deck=()=>DECKS[chap];
+const item=c=>CHAPTERS[chap].items[c.i];
+// Gewicht: niedriges Level zählt doppelt pro Stufe, jedes „nicht gewusst“ erhöht es weiter
+function weight(c){const s=state.c[c.id];return Math.pow(2,4-s.lv)*(1+s.miss*0.6)}
+function pick(){
+  const d=deck(), block=Math.min(3,Math.floor(CHAPTERS[chap].items.length/3));
+  const ws=d.map(c=>recent.slice(-block).some(r=>d[r].i===c.i)?0:weight(c));
+  let r=Math.random()*ws.reduce((a,b)=>a+b,0);
+  for(let k=0;k<ws.length;k++){r-=ws[k];if(r<=0)return k}
+  return 0;
+}
+const $=id=>document.getElementById(id);
+const knownCount=ch=>DECKS[ch].filter(c=>state.c[c.id].lv>=3).length;
+
+function setSwatch(el,color){el.hidden=!color;if(color)el.style.background=color}
+function render(){
+  const c=deck()[cur], v=item(c), s=state.c[c.id], de=c.dir!=="es", st=state.st[chap], tm=typeMode();
+  $("tag").textContent=tm?"Zahl → Español":de?"Deutsch → Español":"Español → Deutsch";
+  $("tag").className="tag"+(de?"":" rev");
+  $("typeForm").hidden=!tm||revealed;
+  $("nextBtn").hidden=!tm||!revealed;
+  $("verdict").hidden=!tm||!verdict;
+  $("yours").hidden=!tm||!verdict||!verdict.yours;
+  if(tm&&verdict){$("verdict").textContent=verdict.text;$("verdict").className="verdict "+verdict.cls;$("yours").innerHTML=verdict.yours||""}
+  $("q").textContent=de?v[0]:v[1];
+  $("q").className="q"+(de?"":" es");
+  $("note").textContent=de?v[2]:"";
+  $("note").hidden=!(de&&v[2]);
+  $("a").textContent=de?v[1]:v[0];
+  $("a").className="a"+(de?" es":"");
+  $("mnemo").textContent=v[3];
+  // Farbfleck: bei Deutsch→Spanisch als Hilfe in der Frage, bei Spanisch→Deutsch erst in der Lösung
+  setSwatch($("swQ"),de?v[5]:null);
+  setSwatch($("swA"),de?null:v[5]);
+  $("miss").hidden=!s.miss;
+  $("miss").textContent=`${s.miss}× nicht gewusst`;
+  $("box").innerHTML=[0,1,2,3].map(n=>`<i class="${n<s.lv?"on":""}"></i>`).join("");
+  $("say").hidden=!(sound&&de);
+  $("answer").hidden=!revealed; $("hint").hidden=revealed||tm; $("show").hidden=revealed||tm;
+  $("ok").hidden=!revealed||tm; $("no").hidden=!revealed||tm;
+  const k=knownCount(chap), n=deck().length;
+  $("sKnown").textContent=`${k}/${n}`;
+  $("sOk").textContent=st.ok; $("sNo").textContent=st.no;
+  $("bar").style.width=(k/n*100)+"%";
+}
+function renderHome(){
+  for(const ch in CHAPTERS){
+    const el=$("ch-"+ch), k=knownCount(ch), n=DECKS[ch].length;
+    el.querySelector(".info").textContent=`${CHAPTERS[ch].items.length} ${CHAPTERS[ch].unit} · ${n} Karten · ${k} sitzen`;
+    el.querySelector(".mini i").style.width=(k/n*100)+"%";
+  }
+}
+function next(){
+  if(cur>=0){recent.push(cur);if(recent.length>3)recent.shift()}
+  cur=pick();revealed=false;verdict=null;render();
+  if(typeMode()){$("inp").value="";$("inp").focus()}
+}
+// Vorlesen: nur das spanische Wort, nur wenn die Lösung Spanisch ist (Deutsch→Spanisch und Zahlen)
+const SOUND_KEY="verbos-sound";
+let sound=false, esVoice=null;
+try{sound=localStorage.getItem(SOUND_KEY)==="1"}catch(e){}
+const tts=("speechSynthesis" in window)?window.speechSynthesis:null;
+// Stimmen nach Qualität sortieren: neuronale/erweiterte Stimmen zuerst, Spanien vor Lateinamerika
+const VOICE_KEY="verbos-voice";
+let esVoices=[];
+function voiceScore(v){
+  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
+  if(/natural|neural|online/.test(n))s+=60;
+  if(/premium|enhanced|erweitert|mejorad/.test(n))s+=50;
+  if(/google/.test(n))s+=35;
+  if(/m[oó]nica|marisol|paulina|elvira|alvaro|álvaro|jorge|helena|lucia|lucía/.test(n))s+=20;
+  if(/eloquence|espeak|compact|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(n))s-=40;
+  if(v.lang==="es-ES"||v.lang==="es_ES")s+=15; else if(/^es[-_]MX/i.test(v.lang))s+=8;
+  if(v.localService===false)s+=5;
+  return s;
+}
+function findVoice(){
+  if(!tts)return;
+  esVoices=tts.getVoices().filter(v=>/^es/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  let saved=null; try{saved=localStorage.getItem(VOICE_KEY)}catch(e){}
+  esVoice=esVoices.find(v=>v.voiceURI===saved)||esVoices[0]||null;
+  renderVoice();
+  if(!esVoices.length)$("voiceTip").textContent="Dein Handy hat keine spanische Stimme. Lade in den Einstellungen unter Sprachausgabe eine spanische Stimme herunter.";
+}
+function renderVoice(){
+  const k=esVoices.indexOf(esVoice), n=esVoices.length;
+  $("vName").textContent=esVoice?esVoice.name+(k===0?" ★":""):"Keine spanische Stimme";
+  $("vCount").textContent=esVoice?`${esVoice.lang.replace("_","-")} · ${k+1} von ${n}`:"";
+  $("vPrev").disabled=$("vNext").disabled=n<2;
+}
+function stepVoice(d){
+  const n=esVoices.length; if(n<2)return;
+  const k=(esVoices.indexOf(esVoice)+d+n)%n;
+  esVoice=esVoices[k];
+  try{localStorage.setItem(VOICE_KEY,esVoice.voiceURI)}catch(e){}
+  renderVoice();speak("¡Hola! Aprendo español");
+}
+function speak(text){
+  if(!tts||!text)return;
+  try{
+    tts.cancel();
+    // „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort
+    const u=new SpeechSynthesisUtterance(text.replace(/\s*\/\s*/g,", ")+".");
+    u.lang=esVoice?esVoice.lang:"es-ES"; if(esVoice)u.voice=esVoice;
+    u.rate=.85; u.pitch=1; u.volume=1;
+    // kleine Pause, sonst schneiden manche Handys den Wortanfang ab
+    setTimeout(()=>tts.speak(u),60);
+  }catch(e){}
+}
+function speakCurrent(){
+  const c=deck()[cur]; if(!c||c.dir==="es")return;
+  speak(item(c)[1]);
+}
+function renderSound(){
+  for(const id of ["soundHome","soundTrain"]){
+    const b=$(id); b.setAttribute("aria-pressed",sound?"true":"false");
+    b.textContent=id==="soundHome"?(sound?"🔊 Ton an":"🔇 Ton aus"):(sound?"🔊":"🔇");
+    b.setAttribute("aria-label",sound?"Ton ausschalten":"Ton einschalten");
+  }
+  if(!tts){$("soundHome").textContent="Ton nicht verfügbar";$("soundHome").disabled=true;$("soundTrain").hidden=true}
+  $("voiceRow").hidden=!(tts&&sound);
+}
+function toggleSound(){
+  sound=!sound;
+  try{localStorage.setItem(SOUND_KEY,sound?"1":"0")}catch(e){}
+  renderSound();
+  if(sound){findVoice();speak("¡Hola!")}
+  else if(tts)tts.cancel();
+  if(!$("train").hidden&&cur>=0)render();
+}
+function reveal(){if(!revealed&&!typeMode()){revealed=true;render();if(sound)speakCurrent()}}
+function applyGrade(knew){
+  const s=state.c[deck()[cur].id], st=state.st[chap];
+  if(knew){s.lv=Math.min(4,s.lv+1);st.ok++}
+  else{s.lv=0;s.miss++;st.no++}
+  save();
+}
+function grade(knew){applyGrade(knew);next()}
+const esc=s=>s.replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+function check(){
+  const raw=$("inp").value; if(!raw.trim())return $("inp").focus();
+  const want=item(deck()[cur])[1];
+  if(norm(raw)===norm(want))verdict={cls:"good",text:"✓ Richtig!"};
+  else if(plain(raw)===plain(want))verdict={cls:"good",text:"✓ Richtig! Achte noch auf den Akzent."};
+  else verdict={cls:"bad",text:"✗ Leider falsch",yours:`Deine Antwort: <s>${esc(raw.trim())}</s>`};
+  applyGrade(verdict.cls==="good");
+  revealed=true;render();$("nextBtn").focus();
+  if(sound)speakCurrent();
+}
+function show(view){$("home").hidden=view!=="home";$("train").hidden=view!=="train";$("voice").hidden=true;if(view==="home")renderHome()}
+function openChapter(ch){
+  if(ch!==chap){chap=ch;cur=-1;recent=[]}
+  $("chname").textContent=CHAPTERS[ch].name;
+  $("train").classList.toggle("compact",CHAPTERS[ch].mode==="type");
+  show("train"); if(cur<0)next(); else render();
+}
+
+for(const ch in CHAPTERS)$("ch-"+ch).addEventListener("click",()=>openChapter(ch));
+$("back").addEventListener("click",()=>show("home"));
+$("card").addEventListener("click",reveal);
+$("card").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();reveal()}});
+$("show").addEventListener("click",reveal);
+$("ok").addEventListener("click",()=>grade(true));
+$("typeForm").addEventListener("submit",e=>{e.preventDefault();check()});
+$("nextBtn").addEventListener("click",next);
+$("soundHome").addEventListener("click",toggleSound);
+$("soundTrain").addEventListener("click",toggleSound);
+$("say").addEventListener("click",e=>{e.stopPropagation();speakCurrent()});
+let wipeArmed=false, wipeTimer=null;
+$("wipe").addEventListener("click",()=>{
+  const b=$("wipe");
+  if(!wipeArmed){
+    wipeArmed=true;b.classList.add("armed");b.textContent="Wirklich alles auf Null? Nochmal tippen";
+    wipeTimer=setTimeout(()=>{wipeArmed=false;b.classList.remove("armed");b.textContent="Gesamten Fortschritt zurücksetzen"},4000);
+    return;
+  }
+  clearTimeout(wipeTimer);wipeArmed=false;b.classList.remove("armed");
+  state={c:{},st:{}};
+  for(const ch in DECKS){state.st[ch]={ok:0,no:0};DECKS[ch].forEach(c=>{state.c[c.id]={lv:0,miss:0}})}
+  try{localStorage.removeItem("verbos-v1")}catch(e){}
+  save();cur=-1;recent=[];renderHome();
+  b.textContent="Alles zurückgesetzt ✓";
+  setTimeout(()=>{b.textContent="Gesamten Fortschritt zurücksetzen"},2500);
+});
+renderSound();
+if(tts){findVoice();tts.onvoiceschanged=findVoice}
+$("vPrev").addEventListener("click",()=>stepVoice(-1));
+$("vNext").addEventListener("click",()=>stepVoice(1));
+$("voiceTest").addEventListener("click",()=>speak("¡Hola! Aprendo español"));
+$("no").addEventListener("click",()=>grade(false));
+let armed=false;
+$("reset").addEventListener("click",()=>{
+  if(!armed){armed=true;$("reset").textContent="Sicher? Nochmal tippen";setTimeout(()=>{armed=false;$("reset").textContent="Neu starten"},3000);return}
+  armed=false;$("reset").textContent="Neu starten";
+  DECKS[chap].forEach(c=>initCard(state,chap,c));state.st[chap]={ok:0,no:0};
+  save();recent=[];cur=-1;next();
+});
+// ===== Sprachmodus: App liest vor, hört zu und bewertet =====
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let deVoice = null;
+function deScore(v){
+  const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
+  if(/natural|neural|online/.test(n))s+=60;
+  if(/premium|enhanced|erweitert/.test(n))s+=50;
+  if(/google/.test(n))s+=35;
+  if(/anna|petra|helena|markus|yannick|viktor|katja|conrad/.test(n))s+=20;
+  if(/eloquence|espeak|compact|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(n))s-=40;
+  if(/^de[-_]DE/i.test(v.lang))s+=15;
+  return s;
+}
+function findDeVoice(){
+  if(!tts)return;
+  deVoice=tts.getVoices().filter(v=>/^de/i.test(v.lang)).sort((a,b)=>deScore(b)-deScore(a))[0]||null;
+}
+
+// Spricht einen Text und wartet, bis er fertig ist
+function say(text, lang){
+  return new Promise(res=>{
+    if(!tts||!text)return res();
+    const es=lang==="es";
+    const u=new SpeechSynthesisUtterance(es?text.replace(/\s*\/\s*/g,", ")+".":text);
+    const v=es?esVoice:deVoice;
+    u.lang=v?v.lang:(es?"es-ES":"de-DE"); if(v)u.voice=v;
+    u.rate=es?.85:1;
+    let done=false;
+    const fin=()=>{if(done)return;done=true;clearTimeout(t);setTimeout(res,120)};
+    const t=setTimeout(fin,2000+text.length*160);
+    u.onend=fin; u.onerror=fin;
+    try{tts.speak(u)}catch(e){fin()}
+  });
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+// Hört einmal zu und liefert alle erkannten Varianten
+function listen(lang, ms){
+  return new Promise(res=>{
+    if(!SR)return res(null);
+    const r=new SR();
+    r.lang=lang==="es"?"es-ES":"de-DE";
+    r.interimResults=false; r.continuous=false; r.maxAlternatives=5;
+    let out=[], done=false;
+    const fin=()=>{if(done)return;done=true;clearTimeout(t);try{r.abort()}catch(e){};vm.rec=null;res(out)};
+    r.onresult=e=>{for(const result of e.results)for(const alt of result)out.push(alt.transcript);fin()};
+    r.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed")out={error:"denied"};fin()};
+    r.onend=()=>setTimeout(fin,80);
+    const t=setTimeout(fin,ms);
+    vm.rec=r;
+    try{r.start()}catch(e){fin()}
+  });
+}
+
+// ---- Antwort prüfen (tolerant bei Aussprache und Schreibweise) ----
+const deacc=s=>s.toLowerCase().replace(/ß/g,"ss").normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+const ART_ES=/\b(el|la|los|las|un|una)\b/g, ART_DE=/\b(der|die|das|ein|eine)\b/g;
+function phon(w,lang){
+  if(lang==="es") return w.replace(/ch/g,"X").replace(/qu/g,"k").replace(/c(?=[ei])/g,"s").replace(/c/g,"k")
+    .replace(/z/g,"s").replace(/v/g,"b").replace(/ll/g,"y").replace(/h/g,"").replace(/X/g,"ch").replace(/rr/g,"r");
+  return w.replace(/h/g,"").replace(/v/g,"f").replace(/(.)\1/g,"$1");
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m)return n; if(!n)return m;
+  let p=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){const q=[i];for(let j=1;j<=n;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=q}
+  return p[n];
+}
+function cands(v,lang){
+  const raw=lang==="es"?v[1]:v[0];
+  return raw.split("/").map(s=>deacc(s).replace(lang==="es"?ART_ES:ART_DE,"").replace(/\s+/g," ").trim()).filter(Boolean);
+}
+// Kleinster Abstand zwischen dem Gehörten und einem Kandidaten (über Wortfenster)
+function bestDist(heard,cand,lang){
+  const cp=phon(cand.replace(/ /g,""),lang), n=cand.split(" ").length;
+  let best=99;
+  for(const h of heard){
+    const t=deacc(h).replace(lang==="es"?ART_ES:ART_DE,"").replace(/\s+/g," ").trim();
+    const ws=t.split(" ").filter(Boolean);
+    const wins=[t.replace(/ /g,"")];
+    for(let k=0;k+n<=ws.length;k++)wins.push(ws.slice(k,k+n).join(""));
+    for(const w of wins)best=Math.min(best,lev(phon(w,lang),cp));
+  }
+  return best;
+}
+function matches(heard,c){
+  const v=item(c), lang=c.dir==="es"?"de":"es";
+  // Zahlen: „47“ oder „cuarenta y siete“
+  if(c.dir==="num"){
+    const want=v[0].replace(/\D/g,"");
+    if(heard.some(h=>h.replace(/[.\s]/g,"").match(/^\D*(\d+)\D*$/)?.[1]===want))return true;
+  }
+  const mine=cands(v,lang);
+  for(const cand of mine){
+    const cp=phon(cand.replace(/ /g,""),lang);
+    const d=bestDist(heard,cand,lang);
+    if(d===0)return true;
+    // Spanische Verben: auch konjugierte Formen wie „habla“, „compra“, „necesita“
+    if(lang==="es"&&chap==="verbs"){
+      for(const h of heard)for(const w of deacc(h).split(" ")){
+        const pw=phon(w,lang);
+        if(cp.length>=5&&/(ar|er|ir)$/.test(cp)&&pw.startsWith(cp.slice(0,-2))&&pw.length<=cp.length+2)return true;
+        if(cp.length===3&&cp!=="ir"&&pw===cp.slice(0,-1))return true; // „da“ für dar, „se“ für ser
+      }
+    }
+    const tol=cp.length<=4?0:cp.length<=7?1:2;
+    if(d<=tol){
+      // Nur akzeptieren, wenn kein anderes Wort im Kapitel genauso gut passt (z. B. comer vs. correr)
+      const rival=CHAPTERS[chap].items.some((o,k)=>k!==c.i&&cands(o,lang).some(oc=>bestDist(heard,oc,lang)<=d));
+      if(!rival)return true;
+    }
+  }
+  return false;
+}
+function command(heard){
+  const t=heard.map(deacc).join(" | ");
+  if(/\b(stopp?|basta|ende|beenden)\b/.test(t))return "stop";
+  if(/(nochmal|noch mal|wiederhol|otra vez|repite|repetir)/.test(t))return "repeat";
+  if(/(nicht|keine ahnung|ni idea|no lo se|weiter|siguiente)/.test(t))return "skip";
+  return null;
+}
+
+// ---- Ablauf ----
+const vm={on:false,token:0,rec:null,mic:true,ok:0,no:0,lock:null};
+try{vm.mic=localStorage.getItem("verbos-mic")!=="0"}catch(e){}
+function vmSet(status,cls){$("vStatus").textContent=status;$("vStatus").className="vstatus "+(cls||"")}
+function vmPrompt(c){
+  const v=item(c), es=c.dir==="es";
+  $("vTag").textContent=c.dir==="num"?"Zahl → Español":es?"Español → Deutsch":"Deutsch → Español";
+  $("vTag").className="tag"+(es?" rev":"");
+  $("vQ").textContent=es?v[1]:v[0];
+  $("vQ").className="q"+(es?" es":"");
+  setSwatch($("vSw"),es?null:v[5]);
+  $("vHeard").textContent=""; $("vAns").hidden=true;
+}
+function vmStats(){$("vOk").textContent=vm.ok;$("vNo").textContent=vm.no}
+function vmButtons(){
+  $("vStart").hidden=vm.on; $("vPause").hidden=!vm.on;
+  $("vMic").textContent=vm.mic&&SR?"🎙️ Mikrofon an":"🔇 Ohne Mikrofon";
+  $("vMic").setAttribute("aria-pressed",vm.mic&&SR?"true":"false");
+}
+async function voiceTurn(){
+  const my=vm.token;
+  if(cur>=0){recent.push(cur);if(recent.length>3)recent.shift()}
+  cur=pick();
+  const c=deck()[cur], v=item(c), es=c.dir==="es";
+  const ansLang=es?"de":"es", ans=es?v[0]:v[1];
+  const qText=es?v[1]:c.dir==="num"?v[0].replace(/\D/g,""):v[0].replace(/\s*\/\s*/g," oder ");
+  const qLang=es?"es":"de";
+  vmPrompt(c);
+  vmSet("🔊 Hör zu …");
+  await say(qText,qLang); if(my!==vm.token)return;
+
+  const useMic=vm.mic&&SR;
+  let heard=[], tries=0;
+  if(useMic){
+    for(;;){
+      await wait(200); if(my!==vm.token)return;
+      vmSet("🎙️ Sag es jetzt …","listen");
+      heard=await listen(ansLang,7000); if(my!==vm.token)return;
+      if(heard&&heard.error){
+        vm.mic=false;vmButtons();
+        vmSet("Mikrofon nicht erlaubt. Erlaube es in den Einstellungen, bis dahin läuft der Modus ohne Mikrofon.","bad");
+        heard=[];await say("Mikrofon nicht erlaubt.","de");break;
+      }
+      const cmd=heard.length?command(heard):null;
+      if(cmd==="stop"){stopVoice();return}
+      if(cmd==="repeat"&&tries<2){tries++;vmSet("🔊 Nochmal …");await say(qText,qLang);if(my!==vm.token)return;continue}
+      if(cmd==="skip"){heard=[];break}
+      if(!heard.length&&tries<1){tries++;vmSet("🔊 Nochmal …");await say(qText,qLang);if(my!==vm.token)return;continue}
+      break;
+    }
+    $("vHeard").textContent=heard.length?`Gehört: „${heard[0].trim()}“`:"Nichts gehört";
+    const ok=heard.length>0&&matches(heard,c);
+    applyGrade(ok); ok?vm.ok++:vm.no++; vmStats();
+    $("vA").textContent=ans; $("vA").className="a"+(es?"":" es"); $("vAns").hidden=false;
+    if(ok){vmSet("✓ Richtig","good");await say("Richtig","de")}
+    else{vmSet("✗ Falsch","bad");await say("Falsch.","de");if(my!==vm.token)return;await say(ans,ansLang)}
+  }else{
+    vmSet("🤔 Antworte laut …","listen");
+    await wait(4500); if(my!==vm.token)return;
+    $("vA").textContent=ans; $("vA").className="a"+(es?"":" es"); $("vAns").hidden=false;
+    vmSet("Lösung");
+    await say(ans,ansLang);
+  }
+  if(my!==vm.token)return;
+  await wait(700);
+  if(my===vm.token&&vm.on)voiceTurn();
+}
+async function startVoice(){
+  if(!tts){vmSet("Dein Gerät kann nicht vorlesen.","bad");return}
+  findVoice();findDeVoice();
+  vm.on=true;vm.token++;vmButtons();
+  try{vm.lock=await navigator.wakeLock?.request("screen")}catch(e){}
+  voiceTurn();
+}
+function stopVoice(){
+  vm.on=false;vm.token++;
+  try{tts&&tts.cancel()}catch(e){}
+  try{vm.rec&&vm.rec.abort()}catch(e){}
+  try{vm.lock&&vm.lock.release()}catch(e){};vm.lock=null;
+  vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
+}
+function openVoice(){
+  vm.ok=0;vm.no=0;vmStats();
+  $("vmName").textContent=CHAPTERS[chap].name;
+  $("vQ").textContent="Bereit?";$("vQ").className="q";$("vTag").textContent="";setSwatch($("vSw"),null);
+  $("vHeard").textContent="";$("vAns").hidden=true;
+  vmSet(SR?"Tippe auf Start. Ich sage ein Wort, du antwortest laut auf der anderen Sprache.":"Dieses Gerät hat keine Spracherkennung. Ich sage das Wort, warte kurz und sage dann die Lösung.");
+  vmButtons();
+  $("home").hidden=true;$("train").hidden=true;$("voice").hidden=false;
+}
+function closeVoice(){stopVoice();$("voice").hidden=true;openChapter(chap)}
+
+$("voiceBtn").addEventListener("click",openVoice);
+$("vStart").addEventListener("click",startVoice);
+$("vPause").addEventListener("click",stopVoice);
+$("vBack").addEventListener("click",closeVoice);
+$("vMic").addEventListener("click",()=>{
+  if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
+  vm.mic=!vm.mic;try{localStorage.setItem("verbos-mic",vm.mic?"1":"0")}catch(e){}
+  vmButtons();
+});
+if(tts){findDeVoice();const prev=tts.onvoiceschanged;tts.onvoiceschanged=()=>{prev&&prev();findDeVoice()}}
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&vm.on)stopVoice()});
+
+state=load();show("home");
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
