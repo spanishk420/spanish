@@ -955,8 +955,9 @@ function voiceInfo(){
   findVoice();findDeVoice();
   const e=freshVoice(esVoice), d=freshVoice(deVoice);
   if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch.";
-  let t=`Stimmen: 🇪🇸 ${e.name} · 🇩🇪 ${d?d.name:"Standard"}`;
-  if(voiceTier(e)<2||voiceTier(d)<2)t+=" · Tipp für eine menschlichere Stimme: Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch (bzw. Deutsch) › z. B. „Mónica“/„Anna“ › Premium laden, dann App neu öffnen.";
+  const lvl=v=>["einfach","Erweitert","Premium"][voiceTier(v)]||"";
+  let t=`Stimmen: 🇪🇸 ${e.name} (${lvl(e)}) · 🇩🇪 ${d?`${d.name} (${lvl(d)})`:"Standard"}`;
+  if(voiceTier(e)<1||(d&&voiceTier(d)<1))t+=" · Tipp für eine menschlichere Stimme: Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch (bzw. Deutsch) › z. B. „Mónica“/„Anna“ › Erweitert oder Premium laden, dann App neu öffnen.";
   return t;
 }
 function startVoice(){
