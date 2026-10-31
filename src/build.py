@@ -108,6 +108,10 @@ settings_html = """
     <button class="btn show" id="sTest" type="button">🧪 Mikro testen</button>
     <div class="vdiag" id="sDiag"></div>
   </div>
+  <details class="sbox">
+    <summary><b>Alle Stimmen anzeigen</b></summary>
+    <pre id="sVoices" style="white-space:pre-wrap;font-size:.72rem;line-height:1.5;margin:8px 0 0;color:var(--muted)"></pre>
+  </details>
   <p class="vtip">Version """ + version + """</p>
 </div>
 """

@@ -326,10 +326,10 @@ async function voiceTurn(){
 function voiceInfo(){
   findVoice();findDeVoice();
   const e=freshVoice(esVoice), d=freshVoice(deVoice);
-  if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch.";
+  if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Lesen & Sprechen › Stimmen › Spanisch.";
   const lvl=v=>["einfach","Erweitert","Premium"][voiceTier(v)]||"";
   let t=`Stimmen: 🇪🇸 ${e.name} (${lvl(e)}) · 🇩🇪 ${d?`${d.name} (${lvl(d)})`:"Standard"}`;
-  if(voiceTier(e)<1||(d&&voiceTier(d)<1))t+=" · Tipp für eine menschlichere Stimme: Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch (bzw. Deutsch) › z. B. „Mónica“/„Anna“ › Erweitert oder Premium laden, dann App neu öffnen.";
+  if(voiceTier(e)<1||(d&&voiceTier(d)<1))t+=" · Tipp für eine menschlichere Stimme: Einstellungen › Bedienungshilfen › Lesen & Sprechen › Stimmen › Spanisch (bzw. Deutsch) › z. B. „Mónica“/„Anna“ › Erweitert oder Premium laden, dann App neu öffnen.";
   return t;
 }
 function startVoice(){
@@ -371,8 +371,15 @@ async function micTest(){
 }
 function openSettings(){
   setTest(SR?"Tippe auf „Mikro testen“ und sag etwas.":"Dieses Gerät hat keine Spracherkennung.");
-  $("sHeard").textContent="";$("sDiag").textContent=tts?voiceInfo():"";
+  $("sHeard").textContent="";$("sDiag").textContent=tts?voiceInfo():"";listVoices();
   $("home").hidden=true;$("settings").hidden=false;
+}
+// Liste aller deutschen/spanischen Stimmen, die der Browser liefert (zur Fehlersuche)
+function listVoices(){
+  const all=voicesNow().filter(v=>/^(es|de)/i.test(v.lang));
+  const e=freshVoice(esVoice), d=freshVoice(deVoice);
+  $("sVoices").textContent=all.length?all.map(v=>`${v===e||v===d?"★ ":""}${v.name} · ${v.lang} · ${v.voiceURI}${v.localService===false?" · online":""}`).join("\n")
+    :"Keine deutschen/spanischen Stimmen gefunden ("+voicesNow().length+" Stimmen insgesamt).";
 }
 function closeSettings(){vm.token++;$("sTest").disabled=false;rec.ui={heard:"vHeard",diag:"vDiag"};show("home")}
 
