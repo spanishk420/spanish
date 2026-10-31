@@ -407,9 +407,14 @@ function voiceScore(v){
   if(v.localService===false)s+=5;
   return s;
 }
+// iOS liefert die Stimmen oft erst verzögert (oder anfangs leer)
+function voicesNow(){try{return tts?tts.getVoices():[]}catch(e){return[]}}
+function freshVoice(v){return v&&voicesNow().find(x=>x.voiceURI===v.voiceURI)||v}
+let voiceTries=0;
 function findVoice(){
   if(!tts)return;
-  esVoices=tts.getVoices().filter(v=>/^es/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const all=voicesNow(); if(!all.length){if(voiceTries++<20)setTimeout(findVoice,300);return}
+  esVoices=all.filter(v=>/^es/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
   let saved=null; try{saved=localStorage.getItem(VOICE_KEY)}catch(e){}
   esVoice=esVoices.find(v=>v.voiceURI===saved)||esVoices[0]||null;
   renderVoice();
@@ -434,7 +439,9 @@ function speak(text){
     tts.cancel();
     // „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort
     const u=new SpeechSynthesisUtterance(text.replace(/\s*\/\s*/g,", ")+".");
-    u.lang=esVoice?esVoice.lang:"es-ES"; if(esVoice)u.voice=esVoice;
+    if(!esVoice)findVoice();
+    const v=freshVoice(esVoice);
+    u.lang=v?v.lang.replace("_","-"):"es-ES"; if(v)u.voice=v;
     u.rate=.85; u.pitch=1; u.volume=1;
     // kleine Pause, sonst schneiden manche Handys den Wortanfang ab
     setTimeout(()=>tts.speak(u),60);

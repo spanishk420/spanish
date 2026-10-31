@@ -20,11 +20,13 @@ Fortschritt nur in localStorage (`verbos-v2`). Gewichtung: niedriges Level und h
 
 ## Sprachmodus – Wünsche des Nutzers
 - Für unterwegs/Auto, ohne Tippen.
-- Mikrofon soll durchgehend laufen (kein Siri-Piepton bei jedem Wort) → continuous recognition, Neustart nur beim Sprachwechsel; Karten in 5er-Blöcken pro Richtung.
+- Mikrofon: kein Siri-Piepton gewünscht – aber durchgehende Erkennung + gleichzeitige Sprachausgabe hat auf dem iPhone „erkennt nichts“ ergeben. Seit 31.10.2026: Mikro pro Antwort frisch gestartet (nach der Ansage, nie während TTS), Zwischenergebnisse werden sofort ausgewertet. Karten in 5er-Blöcken pro Richtung.
 - Neues Wort wird einmal in seiner Sprache vorgelesen (Deutsch → deutsche Stimme, Spanisch → spanische Stimme, Zahlen deutsch).
 - Richtig → nur „Richtig“, sofort weiter. Falsch → „Falsch“ + richtige Lösung.
 - Erkennung tolerant (z. B. „abla“/„habla“ = hablar), aber ähnliche falsche Wörter ablehnen (ver ≠ beber, correr ≠ comer).
-- Stand 1.11.2026: auf echtem iPhone noch nicht bestätigt. Erster Test meldete „erkennt gar nichts“ und störenden Aufnahme-Ton; daraufhin auf durchgehende Erkennung mit Live-Anzeige „Gehört: …“ umgebaut. Offen: ob Erkennung in der Home-Bildschirm-App funktioniert und ob iOS die Sprachausgabe bei laufendem Mikrofon leiser macht.
+- TTS: Nutzer meldete deutsche Stimme für spanische Wörter → Stimme wird jetzt immer explizit gesetzt und frisch aus getVoices() geholt (iOS liefert die Liste verzögert); erstes speak() synchron im Start-Tipp.
+- Diagnose im Sprachmodus: Zeile mit gewählten Stimmen / Mikro-Fehlern, Knopf „🧪 Mikro testen“. Nach 2 stillen Runden Hinweis (Home-Bildschirm-App vs. Safari, Siri & Diktieren).
+- Offen: Bestätigung auf echtem iPhone, v. a. ob Erkennung in der Home-Bildschirm-App geht.
 
 ## Privatsphäre
 - Repo ist öffentlich. Keine persönlichen Daten committen. Commits als `Claude <noreply@anthropic.com>`.

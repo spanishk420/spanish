@@ -13,7 +13,15 @@ function deScore(v){
 }
 function findDeVoice(){
   if(!tts)return;
-  deVoice=tts.getVoices().filter(v=>/^de/i.test(v.lang)).sort((a,b)=>deScore(b)-deScore(a))[0]||null;
+  deVoice=voicesNow().filter(v=>/^de/i.test(v.lang)).sort((a,b)=>deScore(b)-deScore(a))[0]||null;
+}
+// Stimme jedes Mal frisch aus der aktuellen Liste holen. Ohne ausdrücklich gesetzte Stimme
+// nimmt iOS oft die Systemstimme (Deutsch) – auch für spanischen Text.
+function voiceFor(lang){
+  const es=lang==="es";
+  if(es&&!esVoice)findVoice();
+  if(!es&&!deVoice)findDeVoice();
+  return freshVoice(es?esVoice:deVoice);
 }
 
 // Spricht einen Text und wartet, bis er fertig ist
@@ -22,64 +30,96 @@ function say(text, lang){
     if(!tts||!text)return res();
     const es=lang==="es";
     const u=new SpeechSynthesisUtterance(es?text.replace(/\s*\/\s*/g,", ")+".":text);
-    const v=es?esVoice:deVoice;
-    u.lang=v?v.lang:(es?"es-ES":"de-DE"); if(v)u.voice=v;
-    u.rate=es?.85:1;
+    const v=voiceFor(lang);
+    u.lang=v?v.lang.replace("_","-"):(es?"es-ES":"de-DE"); if(v)u.voice=v;
+    u.rate=es?.85:1; u.volume=1;
     let done=false;
-    const fin=()=>{if(done)return;done=true;clearTimeout(t);setTimeout(res,120)};
-    const t=setTimeout(fin,2000+text.length*160);
+    const fin=()=>{if(done)return;done=true;clearTimeout(t);setTimeout(res,150)};
+    const t=setTimeout(fin,2500+text.length*160);
     u.onend=fin; u.onerror=fin;
     try{tts.speak(u)}catch(e){fin()}
   });
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
+// iOS spielt Sprache nur ab, wenn das erste speak() direkt beim Tippen passiert
+function unlockTTS(){
+  if(!tts)return;
+  try{tts.cancel();const u=new SpeechSynthesisUtterance(" ");u.volume=0;tts.speak(u)}catch(e){}
+}
 
-// ---- Durchgehende Spracherkennung ----
-// Das Mikrofon wird einmal gestartet und läuft weiter. Neu gestartet wird nur, wenn sich die
-// Antwortsprache ändert (Deutsch ↔ Spanisch) oder das Handy die Aufnahme von sich aus beendet.
-const rec={r:null,lang:null,want:false,epoch:0,list:[],changedAt:0,denied:false,onChange:null};
-function recText(){return rec.list.map(x=>x.alts[0]||"").join(" ").replace(/\s+/g," ").trim()}
-function recStart(lang){
-  if(!SR)return;
-  if(rec.r&&rec.lang===lang)return;
-  recStop(true);
-  rec.lang=lang;rec.want=true;rec.epoch++;rec.list=[];
-  const r=new SR();
-  r.lang=lang==="es"?"es-ES":"de-DE";
-  r.continuous=true;r.interimResults=true;r.maxAlternatives=3;
-  r.onresult=e=>{
-    if(rec.r!==r)return;
-    const list=[];
-    for(let i=0;i<e.results.length;i++){const x=e.results[i];list.push({final:x.isFinal,alts:Array.from(x).map(a=>a.transcript)})}
-    rec.list=list;rec.changedAt=Date.now();
-    rec.onChange&&rec.onChange();
-  };
-  r.onerror=e=>{
-    if(e.error==="not-allowed"||e.error==="service-not-allowed"){rec.denied=true;rec.want=false;rec.onChange&&rec.onChange()}
-  };
-  r.onend=()=>{
-    if(rec.r!==r)return;
-    rec.r=null;
-    // Das Handy hat die Aufnahme beendet: still neu starten, solange der Modus läuft
-    if(rec.want&&vm.on)setTimeout(()=>{if(rec.want&&vm.on&&!rec.r){const l=rec.lang;rec.lang=null;recStart(l)}},200);
-  };
-  rec.r=r;
-  try{r.start()}catch(e){rec.r=null}
+// ---- Spracherkennung: pro Antwort frisch gestartet ----
+// Das Mikrofon läuft nur, während auf die Antwort gewartet wird, nie während die App spricht.
+// (Auf dem iPhone bringt gleichzeitiges Sprechen die Aufnahme durcheinander, danach hört sie nichts mehr.)
+// Zwischenergebnisse werden sofort ausgewertet, auf ein „fertiges“ Ergebnis wird nicht gewartet.
+const rec={r:null,denied:false,silentRun:0,everHeard:false};
+const standalone=window.navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
+function diag(t){$("vDiag").textContent=t||""}
+function recAbort(){const r=rec.r;rec.r=null;if(r){try{r.abort()}catch(e){}}}
+function listen(lang,c,alive,maxWait){
+  return new Promise(res=>{
+    let done=false,r=null,heard=[],changed=0,restarts=0,started=false,iv=null;
+    const t0=Date.now();
+    const fin=x=>{if(done)return;done=true;clearInterval(iv);const mine=r;r=null;if(mine){if(rec.r===mine)rec.r=null;try{mine.abort()}catch(e){}}res(x)};
+    const evalNow=()=>{
+      $("vHeard").textContent=heard[0]?`Gehört: „${heard[0]}“`:"";
+      if(!heard.length||!c)return;
+      if(matches(heard,c))return fin({ok:true,heard});
+      const cmd=command(heard); if(cmd)return fin({cmd,heard});
+    };
+    const begin=()=>{
+      if(done)return;
+      const x=new SR(); r=x; rec.r=x;
+      x.lang=lang==="es"?"es-ES":"de-DE";
+      x.continuous=true; x.interimResults=true; x.maxAlternatives=3;
+      x.onstart=()=>{if(r===x){started=true;diag("")}};
+      x.onresult=e=>{
+        if(r!==x)return;
+        const parts=[];
+        for(let i=0;i<e.results.length;i++){const R=e.results[i];if(R[0])parts.push(R[0].transcript)}
+        const L=e.results[e.results.length-1];
+        const out=[parts.join(" ").replace(/\s+/g," ").trim()];
+        if(L)for(let k=1;k<L.length;k++)out.push(L[k].transcript);
+        heard=out.map(h=>h.trim()).filter(Boolean);
+        if(heard.length){changed=Date.now();rec.everHeard=true;rec.silentRun=0}
+        evalNow();
+      };
+      x.onerror=e=>{
+        if(r!==x)return;
+        if(e.error==="not-allowed"||e.error==="service-not-allowed")return fin({denied:true,err:e.error});
+        if(e.error!=="no-speech"&&e.error!=="aborted")diag("⚠️ Mikro-Fehler: "+e.error);
+      };
+      x.onend=()=>{
+        if(r!==x||done)return;
+        r=null;if(rec.r===x)rec.r=null;
+        if(heard.length){evalNow();if(!done)fin({ok:false,heard});return}
+        // Ohne Ergebnis beendet (passiert auf dem iPhone öfter): neu starten, solange Zeit ist
+        if(Date.now()-t0<maxWait-800&&restarts<5){restarts++;setTimeout(begin,250)}
+        else fin({ok:false,heard,silent:true});
+      };
+      try{x.start()}catch(err){diag("⚠️ Mikro startet nicht: "+(err.message||err));fin({ok:false,heard,silent:true})}
+    };
+    iv=setInterval(()=>{
+      if(done)return;
+      if(!alive())return fin({stopped:true});
+      const now=Date.now();
+      if(heard.length&&now-changed>1800)return fin({ok:false,heard});
+      if(heard.length&&now-t0>maxWait+8000)return fin({ok:false,heard});
+      if(!heard.length&&now-t0>maxWait)return fin({ok:false,heard,silent:true});
+      if(!started&&now-t0>3000)diag("⚠️ Mikro startet nicht.");
+    },200);
+    begin();
+  });
 }
-function recStop(keepWant){
-  if(!keepWant)rec.want=false;
-  const r=rec.r;rec.r=null;
-  if(r){try{r.abort()}catch(e){}}
+// Beim ersten Tippen kurz starten, damit iOS nach der Mikrofon-Erlaubnis fragt
+function warmupMic(){
+  if(!SR||rec.warm)return;
+  try{const x=new SR();x.lang="de-DE";x.onstart=()=>{rec.warm=true;try{x.abort()}catch(e){}};
+    x.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed")rec.denied=true};x.start()}catch(e){}
 }
-// Merkt sich, was vor der Frage schon gehört wurde, damit nur die neue Antwort zählt
-function recMark(){return{epoch:rec.epoch,len:recText().length}}
-function recSince(m){
-  const t=recText();
-  const fresh=m.epoch===rec.epoch?t.slice(Math.min(m.len,t.length)):t;
-  const out=[fresh.trim()];
-  const last=rec.list[rec.list.length-1];
-  if(last)for(const a of last.alts.slice(1))out.push(a);
-  return out.filter(Boolean);
+function noMicHint(){
+  return standalone
+    ? "Ich höre nichts. Vom Home-Bildschirm aus blockiert iOS das Mikro manchmal. Öffne die Seite testweise direkt in Safari und probier „Mikro testen“."
+    : "Ich höre nichts. Prüfe in Einstellungen › Safari › Mikrofon und ob Siri & Diktieren eingeschaltet sind (Einstellungen › Allgemein › Tastatur › Diktierfunktion).";
 }
 
 // ---- Antwort prüfen (tolerant bei Aussprache und Schreibweise) ----
@@ -151,34 +191,6 @@ function command(heard){
   return null;
 }
 
-// Wartet auf die Antwort: sofort „richtig“, sobald das Wort fällt.
-// „Falsch“, wenn nach dem Sprechen 2 Sekunden Ruhe ist oder nach 8 Sekunden gar nichts kam.
-function waitAnswer(c,mark,promptEnd){
-  return new Promise(res=>{
-    let done=false,timer=null;
-    const fin=r=>{if(done)return;done=true;clearInterval(timer);rec.onChange=null;res(r)};
-    const check=()=>{
-      if(done)return;
-      if(!vm.on)return fin({stopped:true});
-      if(rec.denied)return fin({denied:true});
-      const heard=recSince(mark);
-      $("vHeard").textContent=heard[0]?`Gehört: „${heard[0]}“`:"";
-      if(heard.length){
-        if(matches(heard,c))return fin({ok:true,heard});
-        const cmd=command(heard);
-        if(cmd)return fin({cmd,heard});
-      }
-      const now=Date.now();
-      const spokeAfter=rec.changedAt>promptEnd+700&&heard.length;
-      if(spokeAfter&&now-rec.changedAt>2000)return fin({ok:false,heard});
-      if(now-promptEnd>8000)return fin({ok:false,heard,silent:!spokeAfter});
-    };
-    rec.onChange=check;
-    timer=setInterval(check,250);
-    check();
-  });
-}
-
 // ---- Ablauf ----
 const vm={on:false,token:0,mic:true,ok:0,no:0,lock:null,block:0,blockDir:null};
 try{vm.mic=localStorage.getItem("verbos-mic")!=="0"}catch(e){}
@@ -214,7 +226,7 @@ function pickVoiceCard(){
   return pick();
 }
 async function voiceTurn(){
-  const my=vm.token;
+  const my=vm.token, alive=()=>vm.on&&my===vm.token;
   if(cur>=0){recent.push(cur);if(recent.length>3)recent.shift()}
   cur=pickVoiceCard();
   const c=deck()[cur], v=item(c), es=c.dir==="es";
@@ -222,27 +234,30 @@ async function voiceTurn(){
   const qText=es?v[1]:c.dir==="num"?v[0].replace(/\D/g,""):v[0].replace(/\s*\/\s*/g," oder ");
   const qLang=es?"es":"de";
   const useMic=vm.mic&&SR&&!rec.denied;
-  if(useMic)recStart(ansLang);
   vmPrompt(c);
 
   let tries=0, result;
   for(;;){
     vmSet("🔊 Hör zu …");
-    const mark=useMic?recMark():null;
-    await say(qText,qLang); if(my!==vm.token)return;
+    await say(qText,qLang); if(!alive())return;
     if(!useMic){
       vmSet("🤔 Antworte laut …","listen");
-      await wait(4500); if(my!==vm.token)return;
+      await wait(4500); if(!alive())return;
       result=null;break;
     }
+    await wait(250); if(!alive())return; // iOS braucht einen Moment, bis das Mikro nach der Ausgabe frei ist
     vmSet("🎙️ Ich höre zu …","listen");
-    result=await waitAnswer(c,mark,Date.now()); if(my!==vm.token)return;
+    result=await listen(ansLang,c,alive,8000); if(!alive())return;
     if(result.stopped)return;
     if(result.denied){
-      vm.mic=false;vmButtons();recStop();
-      vmSet("Mikrofon nicht erlaubt. Erlaube es in den Einstellungen, bis dahin läuft der Modus ohne Mikrofon.","bad");
+      rec.denied=true;vm.mic=false;vmButtons();
+      vmSet(result.err==="service-not-allowed"
+        ?"Spracherkennung ist hier gesperrt. Schalte Siri & Diktieren ein oder öffne die Seite direkt in Safari. Bis dahin ohne Mikrofon."
+        :"Mikrofon nicht erlaubt. Erlaube es in den Einstellungen, bis dahin läuft der Modus ohne Mikrofon.","bad");
+      await wait(2500); if(!alive())return;
       result=null;break;
     }
+    if(result.silent&&!rec.everHeard&&++rec.silentRun>=2)diag(noMicHint());
     if(result.cmd==="stop"){stopVoice();return}
     if(result.cmd==="repeat"&&tries<2){tries++;continue}
     if(result.cmd==="skip")result={ok:false};
@@ -261,33 +276,54 @@ async function voiceTurn(){
   }else{
     applyGrade(false);vm.no++;vmStats();
     vmSet("✗ Falsch","bad");
-    await say("Falsch.","de"); if(my!==vm.token)return;
+    await say("Falsch.","de"); if(!alive())return;
     await say(ans,ansLang);
   }
-  if(my!==vm.token)return;
+  if(!alive())return;
   await wait(500);
-  if(my===vm.token&&vm.on)voiceTurn();
+  if(alive())voiceTurn();
 }
-async function startVoice(){
-  if(!tts){vmSet("Dein Gerät kann nicht vorlesen.","bad");return}
+function voiceInfo(){
   findVoice();findDeVoice();
-  rec.denied=false;
+  const e=freshVoice(esVoice), d=freshVoice(deVoice);
+  if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Gesprochene Inhalte › Stimmen › Spanisch.";
+  return `Stimmen: 🇪🇸 ${e.name} · 🇩🇪 ${d?d.name:"Standard"}`;
+}
+function startVoice(){
+  if(!tts){vmSet("Dein Gerät kann nicht vorlesen.","bad");return}
+  // Alles, was iOS „beim Tippen“ verlangt, passiert hier synchron
+  unlockTTS();
+  if(vm.mic&&SR)warmupMic();
+  rec.denied=false;rec.silentRun=0;
   vm.on=true;vm.token++;vm.block=0;vm.blockDir=null;vmButtons();
-  try{vm.lock=await navigator.wakeLock?.request("screen")}catch(e){}
-  voiceTurn();
+  diag(voiceInfo());
+  try{navigator.wakeLock?.request("screen").then(l=>{vm.lock=l}).catch(()=>{})}catch(e){}
+  setTimeout(()=>{if(vm.on){recAbort();voiceTurn()}},300);
 }
 function stopVoice(){
   vm.on=false;vm.token++;
-  recStop();rec.onChange=null;
+  recAbort();
   try{tts&&tts.cancel()}catch(e){}
   try{vm.lock&&vm.lock.release()}catch(e){};vm.lock=null;
   vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
+}
+// Mikro-Test: hört 6 Sekunden auf Deutsch zu und zeigt an, was ankommt
+async function micTest(){
+  if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
+  if(vm.on)stopVoice();
+  try{tts&&tts.cancel()}catch(e){}
+  const my=++vm.token, alive=()=>my===vm.token;
+  vmSet("🎙️ Test: Sag etwas auf Deutsch …","listen");diag("");$("vHeard").textContent="";
+  const r=await listen("de",null,alive,6000); if(!alive())return;
+  if(r.denied)vmSet(r.err==="service-not-allowed"?"Spracherkennung gesperrt (Siri & Diktieren aus oder Home-Bildschirm-App).":"Mikrofon nicht erlaubt.","bad");
+  else if(r.heard&&r.heard.length){rec.denied=false;vmSet("✓ Mikro funktioniert","good")}
+  else{vmSet("✗ Nichts gehört","bad");diag(noMicHint())}
 }
 function openVoice(){
   vm.ok=0;vm.no=0;vmStats();
   $("vmName").textContent=CHAPTERS[chap].name;
   $("vQ").textContent="Bereit?";$("vQ").className="q";$("vTag").textContent="";setSwatch($("vSw"),null);
-  $("vHeard").textContent="";$("vAns").hidden=true;
+  $("vHeard").textContent="";$("vAns").hidden=true;diag(tts?voiceInfo():"");
   vmSet(SR?"Tippe auf Start. Ich sage ein Wort, du antwortest laut in der anderen Sprache.":"Dieses Gerät hat keine Spracherkennung. Ich sage das Wort, warte kurz und sage dann die Lösung.");
   vmButtons();
   $("home").hidden=true;$("train").hidden=true;$("voice").hidden=false;
@@ -298,10 +334,11 @@ $("voiceBtn").addEventListener("click",openVoice);
 $("vStart").addEventListener("click",startVoice);
 $("vPause").addEventListener("click",stopVoice);
 $("vBack").addEventListener("click",closeVoice);
+$("vTest").addEventListener("click",micTest);
 $("vMic").addEventListener("click",()=>{
   if(!SR){vmSet("Dieses Gerät hat keine Spracherkennung.","bad");return}
   vm.mic=!vm.mic;try{localStorage.setItem("verbos-mic",vm.mic?"1":"0")}catch(e){}
-  if(!vm.mic)recStop();
+  if(vm.mic)rec.denied=false;
   vmButtons();
 });
 if(tts){findDeVoice();const prev=tts.onvoiceschanged;tts.onvoiceschanged=()=>{prev&&prev();findDeVoice()}}

@@ -51,6 +51,9 @@ voice_css = """
 .vbig{grid-column:1/-1;font-size:1.3rem;padding:26px 10px}
 .vmicbtn{grid-column:1/-1;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .vmicbtn[aria-pressed="true"]{border-color:var(--azul);color:var(--azul)}
+.vtest{font-size:.9rem;padding:10px}
+.vdiag{color:var(--muted);font-size:.8rem;line-height:1.4;text-align:center;min-height:1em}
+.vdiag:empty{display:none}
 .vtip{margin:0;color:var(--muted);font-size:.82rem;line-height:1.45;text-align:center}
 @media (prefers-reduced-motion:reduce){.vstatus.listen{animation:none}}
 """
@@ -80,7 +83,9 @@ voice_html = """
     <button class="btn show vbig" id="vStart" type="button">▶ Start</button>
     <button class="btn no vbig" id="vPause" type="button" hidden>⏸ Pause</button>
     <button class="btn vmicbtn" id="vMic" type="button" aria-pressed="true">🎙️ Mikrofon an</button>
+    <button class="btn vmicbtn vtest" id="vTest" type="button">🧪 Mikro testen</button>
   </div>
+  <div class="vdiag" id="vDiag"></div>
   <p class="vtip">Sag „nochmal“, um das Wort erneut zu hören, „weiß nicht“ zum Überspringen und „Stopp“ zum Anhalten.</p>
 </div>
 """
