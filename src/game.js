@@ -25,19 +25,15 @@ function addXp(n){
 }
 
 // ---- Einheiten und Lektionen ----
-// Reihenfolge = Lernpfad. Erst Alltag für erste Gespräche in Spanien, dann Wortschatz.
+// Reihenfolge = Lernpfad. Erst Vokabeln (einzelne Wörter). Geparkt (nicht im Pfad, Daten bleiben):
+// numbers, hello, meet, cafe, travel – können jederzeit wieder als Kapitel eingefügt werden.
 const UNITS=[
-  {ch:"hello",title:"Hallo & Danke",desc:"Begrüßen, bitten, danken",color:"sol",size:5},
-  {ch:"meet",title:"Kennenlernen",desc:"Sich vorstellen und nachfragen",color:"azul",size:5},
-  {ch:"cafe",title:"Café & Tapas",desc:"Bestellen und bezahlen",color:"no",size:5},
-  {ch:"numbers",title:"Zahlen",desc:"Preise, Uhrzeit, Tischnummer",color:"ok",
-   groups:[[0,10],[11,15],[16,20],[21,29],[30,39],[40,59],[60,79],[80,99],[100,1000]]},
-  {ch:"travel",title:"Unterwegs",desc:"Weg finden, Tickets, Strand",color:"lila",size:5},
   {ch:"verbs",title:"Verben",desc:"Die 30 wichtigsten Verben",color:"azul",size:5},
-  {ch:"colors",title:"Farben",desc:"Die Grundfarben",color:"sol",size:5},
-  {ch:"colors2",title:"Weitere Farben",desc:"Lila, golden, hell und dunkel",color:"lila",size:5},
+  {ch:"house",title:"Dinge im Haushalt",desc:"Tisch, Stuhl, Küche & Co.",color:"sol",size:5},
+  {ch:"colors",title:"Farben",desc:"Von rojo bis dorado",color:"lila",size:5},
+  {ch:"city",title:"Dinge in der Stadt",desc:"Straße, Bahnhof, Bäckerei & Co.",color:"ok",size:5},
 ];
-const SOON=[{title:"Konjugation",desc:"yo, tú, él … im Präsens"}];
+const SOON=[{title:"Kommt bald",desc:"Wird noch festgelegt"}];
 function unitLessons(u){
   const items=CHAPTERS[u.ch].items, out=[];
   if(u.groups){
@@ -81,7 +77,7 @@ function renderPath(){
     const ls=unitLessons(u), sec=document.createElement("section");sec.className="unit "+u.color;
     const ban=document.createElement("div");ban.className="ubanner";
     ban.innerHTML=`<div><h3></h3><p></p></div><button class="ubtn" type="button">📇 Üben</button>`;
-    ban.querySelector("h3").textContent=`Einheit ${ui+1} · ${u.title}`;ban.querySelector("p").textContent=u.desc;
+    ban.querySelector("h3").textContent=`Kapitel ${ui+1} · ${u.title}`;ban.querySelector("p").textContent=u.desc;
     ban.querySelector(".ubtn").addEventListener("click",()=>openChapter(u.ch));
     sec.appendChild(ban);
     const list=document.createElement("div");list.className="lessons";
@@ -113,7 +109,7 @@ function renderPath(){
   for(const [si,s] of SOON.entries()){
     const sec=document.createElement("section");sec.className="unit soonunit";
     sec.innerHTML=`<div class="ubanner"><div><h3></h3><p></p></div><span class="soon">bald</span></div>`;
-    sec.querySelector("h3").textContent=`Einheit ${UNITS.length+si+1} · ${s.title}`;sec.querySelector("p").textContent=s.desc;
+    sec.querySelector("h3").textContent=`Kapitel ${UNITS.length+si+1} · ${s.title}`;sec.querySelector("p").textContent=s.desc;
     path.appendChild(sec);
   }
 }
@@ -289,9 +285,11 @@ const ansOk=(given,answer)=>answer.split("/").some(a=>normAns(given)===normAns(a
 // Wie normAns, aber Akzente und ñ zählen
 const normExact=s=>s.toLowerCase().normalize("NFC").replace(/[¡!¿?.,…]/g," ").replace(/\s+/g," ").trim().replace(/^(el|la|los|las|un|una) /,"");
 // "ok" = genau richtig, "almost" = nur Akzent vergessen/falsch oder ein Buchstabe vertippt, sonst "wrong"
+const artOf=s=>(s.toLowerCase().replace(/[¡!¿?.,…]/g," ").trim().match(/^(el|la|los|las|un|una)\s/)||[])[1]||"";
 function grade3(given,answer){
   const alts=answer.split("/");
-  if(alts.some(a=>normExact(given)===normExact(a)))return "ok";
+  if(alts.some(a=>normExact(given)===normExact(a)))
+    return alts.some(a=>normExact(given)===normExact(a)&&(!artOf(given)||!artOf(a)||artOf(given)===artOf(a)))?"ok":"article";
   if(alts.some(a=>normAns(given)===normAns(a)))return "almost";
   if(alts.some(a=>{const x=normAns(a),y=normAns(given);return x.length>=4&&lev(x,y)<=1}))return "almost";
   return "wrong";
@@ -308,8 +306,9 @@ function check(){
     given=$("lsInp").value; if(!given.trim())return;
     const g=grade3(given,t.answer);
     ok=g==="ok";
-    $("lsInp").disabled=true;$("lsInp").className=ok?"good":g==="almost"?"almost":"bad";
-    if(g==="almost"){
+    $("lsInp").disabled=true;$("lsInp").className=ok?"good":g==="wrong"?"bad":"almost";
+    if(g==="almost"||g==="article"){
+      L.why=g;
       // Kleiner Fehler: kein Herz weg, aber die Aufgabe kommt nochmal
       L.status="almost";L.given=given;
       L.tasks.push(Object.assign({},t));
@@ -361,7 +360,7 @@ function setFooter(){
     msg.innerHTML=`<b>✓ ${["Super!","Richtig!","Genau!","¡Muy bien!","Perfekt!"][Math.floor(Math.random()*5)]}</b>`;
     btn.textContent="Weiter";btn.disabled=false;
   }else if(L.status==="almost"){
-    msg.innerHTML=`<b>≈ Fast richtig! Achte auf die Schreibweise:</b><span></span><small>Kommt gleich nochmal, ohne Herzverlust.</small>`;
+    msg.innerHTML=`<b>≈ Fast richtig! Achte auf ${L.why==="article"?"den Artikel":"die Schreibweise"}:</b><span></span><small>Kommt gleich nochmal, ohne Herzverlust.</small>`;
     msg.querySelector("span").textContent=t.answer;
     btn.textContent="Weiter";btn.disabled=false;
   }else{
