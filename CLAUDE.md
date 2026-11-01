@@ -1,4 +1,6 @@
-# Español ¡ya! – Projektnotizen
+# Clonelingo – Projektnotizen
+
+(Früher „Español ¡ya!“; seit 1.11.2026 heißt die App Clonelingo.)
 
 Spanisch-Lern-App (PWA) für eine*n deutschsprachige*n Anfänger*in, läuft auf GitHub Pages:
 https://spanishk420.github.io/spanish/ – auf dem iPhone über Safari „Zum Home-Bildschirm“ installiert.

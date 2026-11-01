@@ -1,7 +1,7 @@
 {
-  "name": "Español ¡ya!",
-  "short_name": "Español",
-  "description": "Spanisch lernen mit Karteikarten und Sprachmodus",
+  "name": "Clonelingo",
+  "short_name": "Clonelingo",
+  "description": "Spanisch-Vokabeln lernen: Lernpfad, Karteikarten und Sprachmodus",
   "lang": "de",
   "start_url": "./",
   "scope": "./",

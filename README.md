@@ -1,4 +1,4 @@
-# Español ¡ya!
+# Clonelingo
 
 Spanisch-Lern-App mit Karteikarten (Verben, Farben, Zahlen) und Sprachmodus.
 
