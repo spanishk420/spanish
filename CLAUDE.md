@@ -20,7 +20,8 @@ Lernpfad-Reihenfolge (UNITS in game.js), Fokus Alltag in Spanien (Spanien-Spanis
 1. Hallo & Danke (`hello`) · 2. Kennenlernen (`meet`) · 3. Café & Tapas (`cafe`) · 4. Zahlen (`numbers`, 0–100, 200, 500, 1000) · 5. Unterwegs (`travel`) · 6. Verben (30) · 7. Farben · 8. Weitere Farben · 9. Konjugation „bald“.
 Einträge in CHAPTERS: [Deutsch, Spanisch, Hinweis, Eselsbrücke, Startlevel 0–4, Farbe]. Leere Eselsbrücke wird ausgeblendet.
 Startseite = Lernpfad: pro Kapitel eine Einheit mit Lektionen (5 Wörter; Zahlen in Bereichen) + 👑 Wiederholung. Lektionen pro Einheit nacheinander freigeschaltet. „📇 Üben“ im Einheiten-Banner öffnet die alten Karteikarten (dort auch Sprachmodus).
-Aufgabentypen: pickDe (Spanisch → Bedeutung wählen), pickEs, listen (Aufnahme hören), color (Farbfeld wählen), type (Spanisch schreiben, nur bis 2 Wörter), build (Satz aus Wort-Kacheln, ab 3 Wörtern). Bei Fehlern wird die Eselsbrücke gezeigt. 5 Herzen pro Lektion, falsche Aufgaben kommen am Ende nochmal. XP = 1 pro Aufgabe (+5 ohne Fehler), Tagesziel 30 XP, Serie 🔥 in Tagen.
+Aufgabentypen: pickDe (Spanisch → Bedeutung wählen), pickEs, listen (Aufnahme hören), color (Farbfeld wählen), type (Spanisch schreiben, nur bis 2 Wörter), build (Satz aus Wort-Kacheln, ab 3 Wörtern). Bei Fehlern wird die Eselsbrücke gezeigt. Schreibaufgaben: nur Akzent/ñ falsch oder ein Buchstabe vertippt (ab 4 Zeichen) = „fast richtig“ (gelb, kein Herzverlust, Aufgabe kommt nochmal), siehe grade3().
+Pfad scrollt beim Öffnen zur nächsten Lektion der zuletzt gespielten Einheit (game.lastUnit). 5 Herzen pro Lektion, falsche Aufgaben kommen am Ende nochmal. XP = 1 pro Aufgabe (+5 ohne Fehler), Tagesziel 30 XP, Serie 🔥 in Tagen.
 Fortschritt nur in localStorage: Karten-Level `verbos-v2` (wird auch von Lektionen aktualisiert), Spielstand `espanol-game-v1` (xp, done, streak). Gewichtung: niedriges Level und häufiges „nicht gewusst“ kommen öfter dran.
 
 ## Sprachmodus – Wünsche des Nutzers

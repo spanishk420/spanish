@@ -62,6 +62,13 @@ function lessonKnown(u,l){
 }
 
 // ---- Startseite: Pfad ----
+// Zur Lektion scrollen, an der zuletzt gelernt wurde (nächste offene der letzten Einheit)
+function scrollToLast(){
+  const sec=game.lastUnit&&document.querySelector(`.unit[data-ch="${game.lastUnit}"]`);
+  if(!sec)return;
+  const node=sec.querySelector(".lnode.current")||[...sec.querySelectorAll(".lnode.done")].pop()||sec;
+  requestAnimationFrame(()=>node.scrollIntoView({block:"center"}));
+}
 function renderPath(){
   const st=streakNow();
   $("gStreak").textContent="🔥 "+st;$("gStreak").classList.toggle("on",st>0);
@@ -101,6 +108,7 @@ function renderPath(){
       list.appendChild(wrap);
     });
     sec.appendChild(list);path.appendChild(sec);
+    sec.dataset.ch=u.ch;
   });
   for(const [si,s] of SOON.entries()){
     const sec=document.createElement("section");sec.className="unit soonunit";
@@ -180,6 +188,7 @@ function buildLesson(u,l){
 // ---- Lektion abspielen ----
 const L={u:null,l:null,tasks:[],pos:0,total:0,correct:0,hearts:MAX_HEARTS,sel:null,status:"none",mistakes:0,firstTry:new Set(),wrongOnce:new Set()};
 function startLesson(u,l){
+  game.lastUnit=u.ch;saveGame();
   try{tts&&tts.cancel()}catch(e){}
   if(typeof unlockSfx==="function")unlockSfx();
   Object.assign(L,{u,l,tasks:buildLesson(u,l),pos:0,correct:0,hearts:MAX_HEARTS,sel:null,status:"none",mistakes:0,wrongOnce:new Set()});
@@ -277,6 +286,16 @@ function selectOpt(n){
 function normAns(s){return plain(s).replace(/[¡!¿?.,…]/g," ").replace(/\s+/g," ").trim().replace(/^(el|la|los|las|un|una) /,"")}
 // Richtig, wenn es zu einer der Varianten passt („encantado / encantada“)
 const ansOk=(given,answer)=>answer.split("/").some(a=>normAns(given)===normAns(a));
+// Wie normAns, aber Akzente und ñ zählen
+const normExact=s=>s.toLowerCase().normalize("NFC").replace(/[¡!¿?.,…]/g," ").replace(/\s+/g," ").trim().replace(/^(el|la|los|las|un|una) /,"");
+// "ok" = genau richtig, "almost" = nur Akzent vergessen/falsch oder ein Buchstabe vertippt, sonst "wrong"
+function grade3(given,answer){
+  const alts=answer.split("/");
+  if(alts.some(a=>normExact(given)===normExact(a)))return "ok";
+  if(alts.some(a=>normAns(given)===normAns(a)))return "almost";
+  if(alts.some(a=>{const x=normAns(a),y=normAns(given);return x.length>=4&&lev(x,y)<=1}))return "almost";
+  return "wrong";
+}
 function check(){
   const t=L.tasks[L.pos];
   let ok, given="";
@@ -287,8 +306,17 @@ function check(){
     document.querySelectorAll("#lsOpts .tile").forEach(b=>b.disabled=true);
   }else if(t.type==="type"){
     given=$("lsInp").value; if(!given.trim())return;
-    ok=ansOk(given,t.answer);
-    $("lsInp").disabled=true;$("lsInp").className=ok?"good":"bad";
+    const g=grade3(given,t.answer);
+    ok=g==="ok";
+    $("lsInp").disabled=true;$("lsInp").className=ok?"good":g==="almost"?"almost":"bad";
+    if(g==="almost"){
+      // Kleiner Fehler: kein Herz weg, aber die Aufgabe kommt nochmal
+      L.status="almost";L.given=given;
+      L.tasks.push(Object.assign({},t));
+      if(typeof playSfx==="function")playSfx("ok");
+      setTimeout(()=>sayWord(t.answer,"es"),350);
+      renderHeader();setFooter();return;
+    }
   }else{
     if(L.sel==null)return;
     ok=t.options[L.sel].k===t.i;
@@ -331,6 +359,10 @@ function setFooter(){
     btn.disabled=t.type==="type"?false:t.type==="build"?!L.built.length:L.sel==null;
   }else if(L.status==="correct"){
     msg.innerHTML=`<b>✓ ${["Super!","Richtig!","Genau!","¡Muy bien!","Perfekt!"][Math.floor(Math.random()*5)]}</b>`;
+    btn.textContent="Weiter";btn.disabled=false;
+  }else if(L.status==="almost"){
+    msg.innerHTML=`<b>≈ Fast richtig! Achte auf die Schreibweise:</b><span></span><small>Kommt gleich nochmal, ohne Herzverlust.</small>`;
+    msg.querySelector("span").textContent=t.answer;
     btn.textContent="Weiter";btn.disabled=false;
   }else{
     const v=CHAPTERS[t.ch].items[t.i];

@@ -138,3 +138,10 @@
 .lsmsg small{font-size:.9rem;font-weight:400;margin-top:4px;color:var(--ink);opacity:.8}
 .unit.no .ubanner{background:#C2412D}
 .unit.no .lnode{--c:#D9533E;--d:#922C1D}
+
+/* Fast richtig (nur Akzent / ein Buchstabe) */
+.lstype input.almost{border-color:var(--sol);background:var(--sol-soft)}
+.lsfoot.almost{background:var(--sol-soft);border-color:transparent}
+.lsfoot.almost .lsmsg{color:#9A6A05}
+.lsfoot.almost .gbtn{background:var(--sol);box-shadow:0 5px 0 #A87508}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lsfoot.almost .lsmsg{color:var(--sol)}}

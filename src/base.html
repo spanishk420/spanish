@@ -469,7 +469,7 @@ function render(){
   $("sOk").textContent=st.ok; $("sNo").textContent=st.no;
   $("bar").style.width=(k/n*100)+"%";
 }
-function renderHome(){renderPath()}
+function renderHome(){renderPath();scrollToLast()}
 function next(){
   if(cur>=0){recent.push(cur);if(recent.length>3)recent.shift()}
   cur=pick();revealed=false;verdict=null;render();
