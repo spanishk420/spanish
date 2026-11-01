@@ -3,6 +3,7 @@
 // Zickzack-Pfad (lesson-button.tsx), Lektion mit Herzen/Fortschritt/Prüfen-Leiste (quiz.tsx, footer.tsx, card.tsx).
 // Hier ohne Server: alles in localStorage, Inhalte aus CHAPTERS.
 
+const SHOW_CAR=false; // Auto-Modus-Karte im Pfad anzeigen?
 const GAME_KEY="espanol-game-v1", GOAL_XP=30, MAX_HEARTS=5, XP_PER=1;
 let game=loadGame();
 function loadGame(){
@@ -112,10 +113,12 @@ function renderPath(){
     rc.addEventListener("click",startRefresh);
     path.appendChild(rc);
   }
-  // Auto-Modus (nur hören)
-  const cc=document.createElement("button");cc.type="button";cc.className="refresh carcard";
-  cc.innerHTML=`<span class="ri">🚗</span><span><b>Auto-Modus</b><small>Nur hören und laut antworten, auch mit CarPlay</small></span><span class="go">›</span>`;
-  cc.addEventListener("click",openCar);path.appendChild(cc);
+  // Auto-Modus (nur hören) – vorerst ausgeblendet (Wunsch des Nutzers); Code in car.js bleibt
+  if(SHOW_CAR){
+    const cc=document.createElement("button");cc.type="button";cc.className="refresh carcard";
+    cc.innerHTML=`<span class="ri">🚗</span><span><b>Auto-Modus</b><small>Nur hören und laut antworten, auch mit CarPlay</small></span><span class="go">›</span>`;
+    cc.addEventListener("click",openCar);path.appendChild(cc);
+  }
   UNITS.forEach((u,ui)=>{
     const open=unitOpen(ui);
     const ls=unitLessons(u), sec=document.createElement("section");sec.className="unit "+u.color;
