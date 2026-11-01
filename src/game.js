@@ -25,14 +25,19 @@ function addXp(n){
 }
 
 // ---- Einheiten und Lektionen ----
+// Reihenfolge = Lernpfad. Erst Alltag für erste Gespräche in Spanien, dann Wortschatz.
 const UNITS=[
-  {ch:"verbs",title:"Einheit 1 · Verben",desc:"Die 30 wichtigsten Verben",color:"azul",size:5},
-  {ch:"colors",title:"Einheit 2 · Farben",desc:"Die Grundfarben",color:"sol",size:5},
-  {ch:"colors2",title:"Einheit 3 · Weitere Farben",desc:"Lila, golden, hell und dunkel",color:"lila",size:5},
-  {ch:"numbers",title:"Einheit 4 · Zahlen",desc:"Von cero bis mil",color:"ok",
+  {ch:"hello",title:"Hallo & Danke",desc:"Begrüßen, bitten, danken",color:"sol",size:5},
+  {ch:"meet",title:"Kennenlernen",desc:"Sich vorstellen und nachfragen",color:"azul",size:5},
+  {ch:"cafe",title:"Café & Tapas",desc:"Bestellen und bezahlen",color:"no",size:5},
+  {ch:"numbers",title:"Zahlen",desc:"Preise, Uhrzeit, Tischnummer",color:"ok",
    groups:[[0,10],[11,15],[16,20],[21,29],[30,39],[40,59],[60,79],[80,99],[100,1000]]},
+  {ch:"travel",title:"Unterwegs",desc:"Weg finden, Tickets, Strand",color:"lila",size:5},
+  {ch:"verbs",title:"Verben",desc:"Die 30 wichtigsten Verben",color:"azul",size:5},
+  {ch:"colors",title:"Farben",desc:"Die Grundfarben",color:"sol",size:5},
+  {ch:"colors2",title:"Weitere Farben",desc:"Lila, golden, hell und dunkel",color:"lila",size:5},
 ];
-const SOON=[{title:"Einheit 5 · Konjugation",desc:"yo, tú, él … im Präsens"},{title:"Einheit 6 · Alltagssätze",desc:"¿Qué haces?, No sé …"}];
+const SOON=[{title:"Konjugation",desc:"yo, tú, él … im Präsens"}];
 function unitLessons(u){
   const items=CHAPTERS[u.ch].items, out=[];
   if(u.groups){
@@ -65,11 +70,11 @@ function renderPath(){
   $("gGoalTxt").textContent=tx>=GOAL_XP?`Tagesziel geschafft! ${tx} XP heute 🎉`:`Tagesziel: ${tx} / ${GOAL_XP} XP`;
   $("gGoalBar").style.width=Math.min(100,tx/GOAL_XP*100)+"%";
   const path=$("path");path.textContent="";
-  UNITS.forEach(u=>{
+  UNITS.forEach((u,ui)=>{
     const ls=unitLessons(u), sec=document.createElement("section");sec.className="unit "+u.color;
     const ban=document.createElement("div");ban.className="ubanner";
     ban.innerHTML=`<div><h3></h3><p></p></div><button class="ubtn" type="button">📇 Üben</button>`;
-    ban.querySelector("h3").textContent=u.title;ban.querySelector("p").textContent=u.desc;
+    ban.querySelector("h3").textContent=`Einheit ${ui+1} · ${u.title}`;ban.querySelector("p").textContent=u.desc;
     ban.querySelector(".ubtn").addEventListener("click",()=>openChapter(u.ch));
     sec.appendChild(ban);
     const list=document.createElement("div");list.className="lessons";
@@ -97,10 +102,10 @@ function renderPath(){
     });
     sec.appendChild(list);path.appendChild(sec);
   });
-  for(const s of SOON){
+  for(const [si,s] of SOON.entries()){
     const sec=document.createElement("section");sec.className="unit soonunit";
     sec.innerHTML=`<div class="ubanner"><div><h3></h3><p></p></div><span class="soon">bald</span></div>`;
-    sec.querySelector("h3").textContent=s.title;sec.querySelector("p").textContent=s.desc;
+    sec.querySelector("h3").textContent=`Einheit ${UNITS.length+si+1} · ${s.title}`;sec.querySelector("p").textContent=s.desc;
     path.appendChild(sec);
   }
 }
@@ -117,8 +122,12 @@ function distractors(ch,i,pool,n){
   if(cand.length<n)cand=cand.concat(items.map((v,k)=>k).filter(k=>k!==i&&!cand.includes(k)&&items[k][1]!==own[1]));
   return sample(cand,n);
 }
+// Wörter eines spanischen Satzes als Kacheln (ohne Satzzeichen)
+const tilesOf=t=>t.replace(/[¿¡?!.,…]/g," ").split(/\s+/).filter(Boolean);
 function makeTask(ch,i,type,pool){
   const v=CHAPTERS[ch].items[i], num=ch==="numbers";
+  // Längere Sätze nicht frei tippen, sondern aus Wort-Kacheln bauen
+  if(type==="type"&&!num&&tilesOf(v[1]).length>2)type="build";
   const opts=k=>shuffle([i,...distractors(ch,i,pool,k)]);
   const pre=CHAPTERS[ch].prefix;
   const card=dir=>num?pre+v[0]:pre+v[1]+"|"+dir;
@@ -131,6 +140,12 @@ function makeTask(ch,i,type,pool){
       options:opts(3).map(k=>({k,text:CHAPTERS[ch].items[k][1],lang:"es",silent:true}))};
     case "color": return {type,ch,i,card:card("es"),title:"Welche Farbe ist das?",prompt:v[1],promptLang:"es",bubble:true,
       options:opts(3).map(k=>({k,swatch:CHAPTERS[ch].items[k][5],text:CHAPTERS[ch].items[k][0]}))};
+    case "build":{
+      const words=tilesOf(v[1]);
+      const extra=shuffle(CHAPTERS[ch].items.flatMap((o,k)=>k===i?[]:tilesOf(o[1])).filter(w=>!words.includes(w)));
+      const tiles=shuffle(words.concat([...new Set(extra)].slice(0,Math.min(3,Math.max(2,6-words.length)))));
+      return {type,ch,i,card:card("de"),title:"Bau den Satz auf Spanisch",prompt:v[0],promptLang:"de",answer:v[1],tiles};
+    }
     case "type": return {type,ch,i,card:card("de"),title:num?"Schreib die Zahl auf Spanisch":"Schreib auf Spanisch",
       prompt:num?numStr(v):v[0],promptLang:"de",swatch:isColor(ch)?v[5]:null,answer:v[1]};
   }
@@ -205,7 +220,18 @@ function renderTask(){
   }
   const o=$("lsOpts");o.textContent="";o.className="lsopts"+(t.options&&t.options[0].swatch?" swatches":"");
   $("lsType").hidden=t.type!=="type";
-  if(t.type==="type"){
+  if(t.type==="build"){
+    L.built=[];
+    o.className="lsopts build";
+    const line=document.createElement("div");line.className="bline";line.id="lsLine";
+    const bank=document.createElement("div");bank.className="bbank";
+    t.tiles.forEach((w,k)=>{
+      const b=document.createElement("button");b.type="button";b.className="tile";b.textContent=w;b.dataset.k=k;
+      b.addEventListener("click",()=>tapTile(k));
+      bank.appendChild(b);
+    });
+    o.append(line,bank);
+  }else if(t.type==="type"){
     const inp=$("lsInp");inp.value="";inp.disabled=false;inp.className="";
     setTimeout(()=>inp.focus(),50);
   }else{
@@ -226,6 +252,19 @@ function sayWord(text,lang,slow){
   if(vox){vox.defaultPlaybackRate=slow?.7:1;vox.playbackRate=slow?.7:1}
   if(typeof say==="function")say(text,lang);
 }
+// Kachel antippen: aus der Auswahl in den Satz oder zurück
+function tapTile(k){
+  if(L.status!=="none")return;
+  const t=L.tasks[L.pos], pos=L.built.indexOf(k);
+  if(pos>=0)L.built.splice(pos,1);else{L.built.push(k);sayWord(t.tiles[k],"es")}
+  const line=$("lsLine");line.textContent="";
+  for(const j of L.built){
+    const b=document.createElement("button");b.type="button";b.className="tile";b.textContent=t.tiles[j];
+    b.addEventListener("click",()=>tapTile(j));line.appendChild(b);
+  }
+  document.querySelectorAll("#lsOpts .bbank .tile").forEach(b=>b.classList.toggle("used",L.built.includes(+b.dataset.k)));
+  setFooter();
+}
 function selectOpt(n){
   if(L.status!=="none")return;
   const t=L.tasks[L.pos];L.sel=n;
@@ -235,13 +274,20 @@ function selectOpt(n){
   if(op.lang==="es"&&!op.silent)sayWord(op.text,"es");
   setFooter();
 }
-function normAns(s){return plain(s).replace(/[¡!¿?.,]/g,"").replace(/^(el|la|los|las|un|una) /,"").trim()}
+function normAns(s){return plain(s).replace(/[¡!¿?.,…]/g," ").replace(/\s+/g," ").trim().replace(/^(el|la|los|las|un|una) /,"")}
+// Richtig, wenn es zu einer der Varianten passt („encantado / encantada“)
+const ansOk=(given,answer)=>answer.split("/").some(a=>normAns(given)===normAns(a));
 function check(){
   const t=L.tasks[L.pos];
   let ok, given="";
-  if(t.type==="type"){
+  if(t.type==="build"){
+    if(!L.built.length)return;
+    ok=ansOk(L.built.map(k=>t.tiles[k]).join(" "),t.answer);
+    $("lsLine").classList.add(ok?"good":"bad");
+    document.querySelectorAll("#lsOpts .tile").forEach(b=>b.disabled=true);
+  }else if(t.type==="type"){
     given=$("lsInp").value; if(!given.trim())return;
-    ok=normAns(given)===normAns(t.answer);
+    ok=ansOk(given,t.answer);
     $("lsInp").disabled=true;$("lsInp").className=ok?"good":"bad";
   }else{
     if(L.sel==null)return;
@@ -259,7 +305,7 @@ function check(){
     if(!L.wrongOnce.has(key))gradeCardId(t.ch,t.card,true);
     if(typeof playSfx==="function")playSfx("ok");
     // Nach dem Schreiben das Wort einmal vorlesen
-    if(t.type==="type")setTimeout(()=>sayWord(t.answer,"es"),350);
+    if(t.type==="type"||t.type==="build")setTimeout(()=>sayWord(t.answer,"es"),350);
   }else{
     L.status="wrong";L.mistakes++;L.hearts--;
     if(!L.wrongOnce.has(key)){L.wrongOnce.add(key);gradeCardId(t.ch,t.card,false)}
@@ -282,14 +328,15 @@ function setFooter(){
   msg.textContent="";
   if(L.status==="none"){
     btn.textContent="Prüfen";
-    btn.disabled=t.type==="type"?false:L.sel==null;
+    btn.disabled=t.type==="type"?false:t.type==="build"?!L.built.length:L.sel==null;
   }else if(L.status==="correct"){
     msg.innerHTML=`<b>✓ ${["Super!","Richtig!","Genau!","¡Muy bien!","Perfekt!"][Math.floor(Math.random()*5)]}</b>`;
     btn.textContent="Weiter";btn.disabled=false;
   }else{
     const v=CHAPTERS[t.ch].items[t.i];
     const sol=t.type==="pickDe"?(t.ch==="numbers"?numStr(v):v[0]):t.type==="color"?v[0]:v[1];
-    msg.innerHTML=`<b>✗ Richtige Lösung:</b><span></span>`;msg.querySelector("span").textContent=sol;
+    msg.innerHTML=`<b>✗ Richtige Lösung:</b><span></span><small></small>`;msg.querySelector("span").textContent=sol;
+    if(v[3])msg.querySelector("small").textContent="💡 "+v[3];
     btn.textContent=L.hearts<=0?"Weiter":"Verstanden";btn.disabled=false;
   }
 }

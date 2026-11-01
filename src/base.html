@@ -248,6 +248,69 @@ h1 span{color:var(--sol)}
 <script>
 // Einträge: [Deutsch, Spanisch, Hinweis, Eselsbrücke, Startlevel 0–4, Farbe (nur Farben)]
 const CHAPTERS = {
+  // ---- Alltag in Spanien: erste Gespräche ----
+  hello:{name:"Hallo & Danke", unit:"Ausdrücke", prefix:"h:", items:[
+    ["Hallo","hola","Das h ist stumm.","Klingt wie „Ola“, die La-Ola-Welle zur Begrüßung.",1],
+    ["Guten Morgen / Guten Tag","buenos días","bis zum Mittagessen (in Spanien ca. 14 Uhr)","Días = Tage, also „gute Tage“.",0],
+    ["Guten Nachmittag","buenas tardes","nach dem Mittagessen, in Spanien bis ca. 21 Uhr","Tarde = später Teil des Tages.",0],
+    ["Gute Nacht / Guten Abend","buenas noches","spätabends, auch zur Begrüßung","Noche klingt wie „Nacht“.",0],
+    ["Tschüss","adiós","","Adieu!",1],
+    ["Bis später","hasta luego","in Spanien oft einfach statt „Tschüss“","Hasta la vista, luego = später.",0],
+    ["Bitte","por favor","wenn man um etwas bittet","Einen Gefallen (Favor) erbitten.",1],
+    ["Danke","gracias","Muchas gracias = vielen Dank","Wie Grazie auf Italienisch.",2],
+    ["Gern geschehen","de nada","Antwort auf gracias","Wörtlich „von nichts“, also „nichts zu danken“.",0],
+    ["Entschuldigung","perdón","auch um jemanden anzusprechen","Pardon!",0],
+    ["Es tut mir leid","lo siento","","Wörtlich „ich fühle es“, wie Sentiment.",0],
+    ["ja","sí","mit Akzent! si ohne Akzent heißt „wenn“","Sí, sí, Señor!",2],
+    ["nein","no","","Wie auf Englisch.",2],
+    ["okay / einverstanden","vale","typisch Spanien, hört man ständig","Hörst du in Spanien in jedem zweiten Satz.",0]
+  ]},
+  meet:{name:"Kennenlernen", unit:"Sätze", prefix:"k:", items:[
+    ["Wie geht's?","¿qué tal?","locker, passt fast immer","Wörtlich „was so?“",0],
+    ["Gut, danke","bien, gracias","","Bien wie „Benefiz“, etwas Gutes.",0],
+    ["Und du?","¿y tú?","y = und","Tú klingt wie „du“.",0],
+    ["Wie heißt du?","¿cómo te llamas?","","Wörtlich „wie rufst du dich?“",0],
+    ["Ich heiße …","me llamo …","dann den Namen sagen","Das Lama ruft: Me llamo …!",0],
+    ["Freut mich","mucho gusto","nach dem Vorstellen","Viel (mucho) Genuss (gusto).",0],
+    ["Woher kommst du?","¿de dónde eres?","","Dónde = wo, de = von.",0],
+    ["Ich komme aus Deutschland","soy de Alemania","Österreich = Austria, Schweiz = Suiza","Alemania kommt von den Alemannen.",0],
+    ["Ich spreche ein bisschen Spanisch","hablo un poco de español","","Un poco = ein bisschen, wie „poco a poco“.",0],
+    ["Ich verstehe nicht","no entiendo","","Entender = verstehen.",0],
+    ["Kannst du das wiederholen?","¿puedes repetir?","höflich mit „usted“: ¿puede repetir?","Repetir wie „Repetition“.",0],
+    ["Langsamer, bitte","más despacio, por favor","","Des-pacio: das Pace (Tempo) runter!",0],
+    ["Sprichst du Englisch?","¿hablas inglés?","","Hablar = sprechen, inglés = Englisch.",0]
+  ]},
+  cafe:{name:"Café & Tapas", unit:"Sätze", prefix:"c:", items:[
+    ["ein Milchkaffee","un café con leche","der Klassiker zum Frühstück","Con leche = mit Milch, wie „Leche“ im Dulce de leche.",0],
+    ["ein kleines Bier vom Fass","una caña","typisch Spanien","Caña heißt auch Rohr, das Bier kommt aus dem Zapfhahn.",0],
+    ["ein Wasser","un agua","Agua ist weiblich, trotzdem: un agua","Aqua!",0],
+    ["ein Glas Rotwein","una copa de vino tinto","tinto = rot (beim Wein)","Vino tinto, Tinte ist auch dunkel.",0],
+    ["Ich hätte gern …","quería …","so bestellt man in Spanien höflich","Querer = wollen, quería = ich wollte gern.",0],
+    ["Für mich …","para mí …","","Para = für, mí = mich.",0],
+    ["die Speisekarte","la carta","„el menú“ ist oft das Tagesmenü","Eine Karte: la carta.",0],
+    ["Die Rechnung, bitte","la cuenta, por favor","","Cuenta von contar = zählen. Da wird gezählt.",0],
+    ["Was empfehlen Sie?","¿qué me recomienda?","höflich mit „usted“","Recomendar = empfehlen, wie recommend.",0],
+    ["Sehr lecker!","¡está muy rico!","rico = lecker (beim Essen)","So lecker, man fühlt sich reich (rico).",0],
+    ["Ein Tisch für zwei","una mesa para dos","","",0],
+    ["Kann ich mit Karte zahlen?","¿puedo pagar con tarjeta?","","Pagar = zahlen, wie „PayPal“.",0],
+    ["Wo ist die Toilette?","¿dónde está el baño?","in Spanien auch „los servicios“","Baño wie „Bad“.",0]
+  ]},
+  travel:{name:"Unterwegs", unit:"Wörter", prefix:"u:", items:[
+    ["Wo ist …?","¿dónde está …?","dann den Ort sagen","Dónde = wo.",0],
+    ["rechts","a la derecha","","Derecha wie „direkt“, die rechte Hand.",0],
+    ["links","a la izquierda","","Izquierda: das lange, schiefe Wort ist links.",0],
+    ["geradeaus","todo recto","in Spanien; in Lateinamerika „derecho“","Recto wie „rechter Winkel“: schnurgerade.",0],
+    ["nah","cerca","","Cerca wie „circa“: ungefähr hier, also nah.",0],
+    ["weit","lejos","","",0],
+    ["Wie viel kostet das?","¿cuánto cuesta?","","Cuánto = wie viel, cuesta wie „kostet“.",0],
+    ["die Fahrkarte","el billete","in Spanien; in Lateinamerika „boleto“","Wie ein Billett.",0],
+    ["der Bahnhof","la estación","","Station.",0],
+    ["die Bushaltestelle","la parada de autobús","parada = Haltestelle","Der Bus hält, wie bei einer Parade.",0],
+    ["der Strand","la playa","","Am Strand wird gespielt (play).",0],
+    ["heute","hoy","","",0],
+    ["morgen","mañana","auch: der Morgen","Mañana, mañana, Spanier verschieben gern auf morgen.",0],
+    ["Ich brauche Hilfe","necesito ayuda","","Necesitar = brauchen (necessary).",0]
+  ]},
   verbs:{name:"Verben", unit:"Verben", prefix:"", items:[
     ["sein","ser","dauerhaft, z. B. „ich bin Deutscher“","Ser bleibt, wie man ist: Eigenschaften, Herkunft, Beruf.",2],
     ["essen","comer","","Denk an „Komm essen!“ → comer.",3],
@@ -391,7 +454,7 @@ function render(){
   $("note").hidden=!(de&&v[2]);
   $("a").textContent=de?v[1]:v[0];
   $("a").className="a"+(de?" es":"");
-  $("mnemo").textContent=v[3];
+  $("mnemo").textContent=v[3];$("mnemo").hidden=!v[3];
   // Farbfleck: bei Deutsch→Spanisch als Hilfe in der Frage, bei Spanisch→Deutsch erst in der Lösung
   setSwatch($("swQ"),de?v[5]:null);
   setSwatch($("swA"),de?null:v[5]);
@@ -467,7 +530,10 @@ function stepVoice(d){
 // ---- Aufnahmen: vorab mit KI-Stimmen erzeugt (tools/gen_audio.py), beim Bauen eingesetzt ----
 const AUDIO={};
 // „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort. Muss zu tools/gen_audio.py passen.
-function ttsText(text,lang){return lang==="es"?text.replace(/\s*\/\s*/g,", ")+".":text.replace(/\s*\/\s*/g," oder ")}
+function ttsText(text,lang){
+  const t=text.replace(/\s*…/g,"").replace(/\s*\/\s*/g,lang==="es"?", ":" oder ").trim();
+  return /[.?!]$/.test(t)?t:t+".";
+}
 const vox=typeof Audio==="function"?new Audio():null;
 if(vox)vox.preload="auto";
 function hasClip(text,lang){return !!AUDIO[lang+"|"+String(text).trim()]}

@@ -125,3 +125,16 @@
 #settings{height:auto;min-height:100%}
 #settings .wipe{margin-top:8px}
 @media (prefers-reduced-motion:reduce){.ltip,.lfemoji{animation:none}}
+
+/* Satz bauen */
+.lsopts.build{display:flex;flex-direction:column;gap:22px}
+.bline{min-height:62px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;padding:8px 0;border-bottom:2px solid var(--line);border-top:2px solid var(--line)}
+.bline.good{border-color:var(--ok)} .bline.bad{border-color:var(--no)}
+.bbank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tile{font:inherit;font-weight:700;font-size:1.05rem;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-bottom-width:4px;border-radius:12px;padding:9px 13px}
+.tile:active:not(:disabled){border-bottom-width:2px;transform:translateY(2px)}
+.bbank .tile.used{color:transparent;background:var(--line);border-color:var(--line);pointer-events:none}
+.tile:disabled{cursor:default}
+.lsmsg small{font-size:.9rem;font-weight:400;margin-top:4px;color:var(--ink);opacity:.8}
+.unit.no .ubanner{background:#C2412D}
+.unit.no .lnode{--c:#D9533E;--d:#922C1D}
