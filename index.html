@@ -300,7 +300,7 @@ h1 span{color:var(--sol)}
     <summary><b>Alle Stimmen anzeigen</b></summary>
     <pre id="sVoices" style="white-space:pre-wrap;font-size:.72rem;line-height:1.5;margin:8px 0 0;color:var(--muted)"></pre>
   </details>
-  <p class="vtip">Version 8</p>
+  <p class="vtip">Version 9</p>
 </div>
 
 <script>
@@ -529,12 +529,42 @@ function stepVoice(d){
   try{localStorage.setItem(VOICE_KEY,esVoice.voiceURI)}catch(e){}
   renderVoice();speak("¡Hola! Aprendo español");
 }
+// ---- Aufnahmen: vorab mit KI-Stimmen erzeugt (tools/gen_audio.py), beim Bauen eingesetzt ----
+const AUDIO={"es|ser":"es/ser.mp3","de|sein":"de/sein.mp3","es|comer":"es/comer.mp3","de|essen":"de/essen.mp3","es|tener":"es/tener.mp3","de|haben":"de/haben.mp3","es|ir":"es/ir.mp3","de|gehen":"de/gehen.mp3","es|beber":"es/beber.mp3","de|trinken":"de/trinken.mp3","es|hacer":"es/hacer.mp3","de|machen / tun":"de/machen-tun.mp3","es|hablar":"es/hablar.mp3","de|sprechen":"de/sprechen.mp3","es|querer":"es/querer.mp3","de|wollen":"de/wollen.mp3","es|poder":"es/poder.mp3","de|können":"de/koennen.mp3","es|ver":"es/ver.mp3","de|sehen":"de/sehen.mp3","es|venir":"es/venir.mp3","de|kommen":"de/kommen.mp3","es|decir":"es/decir.mp3","de|sagen":"de/sagen.mp3","es|saber":"es/saber.mp3","de|wissen":"de/wissen.mp3","es|dar":"es/dar.mp3","de|geben":"de/geben.mp3","es|aprender":"es/aprender.mp3","de|lernen":"de/lernen.mp3","es|comprar":"es/comprar.mp3","de|kaufen":"de/kaufen.mp3","es|abrir":"es/abrir.mp3","de|öffnen":"de/oeffnen.mp3","es|correr":"es/correr.mp3","de|laufen / rennen":"de/laufen-rennen.mp3","es|dormir":"es/dormir.mp3","de|schlafen":"de/schlafen.mp3","es|escuchar":"es/escuchar.mp3","de|hören":"de/hoeren.mp3","es|trabajar":"es/trabajar.mp3","de|arbeiten":"de/arbeiten.mp3","es|escribir":"es/escribir.mp3","de|schreiben":"de/schreiben.mp3","es|vivir":"es/vivir.mp3","de|wohnen / leben":"de/wohnen-leben.mp3","es|bailar":"es/bailar.mp3","de|tanzen":"de/tanzen.mp3","es|comprender":"es/comprender.mp3","de|verstehen":"de/verstehen.mp3","es|encontrar":"es/encontrar.mp3","de|finden":"de/finden.mp3","es|tomar":"es/tomar.mp3","de|nehmen":"de/nehmen.mp3","es|necesitar":"es/necesitar.mp3","de|brauchen":"de/brauchen.mp3","es|buscar":"es/buscar.mp3","de|suchen":"de/suchen.mp3","es|esperar":"es/esperar.mp3","de|warten / hoffen":"de/warten-hoffen.mp3","es|rojo":"es/rojo.mp3","de|rot":"de/rot.mp3","es|azul":"es/azul.mp3","de|blau":"de/blau.mp3","es|amarillo":"es/amarillo.mp3","de|gelb":"de/gelb.mp3","es|verde":"es/verde.mp3","de|grün":"de/gruen.mp3","es|negro":"es/negro.mp3","de|schwarz":"de/schwarz.mp3","es|blanco":"es/blanco.mp3","de|weiß":"de/weiss.mp3","es|gris":"es/gris.mp3","de|grau":"de/grau.mp3","es|marrón":"es/marron.mp3","de|braun":"de/braun.mp3","es|naranja":"es/naranja.mp3","de|orange":"de/orange.mp3","es|rosa":"es/rosa.mp3","de|rosa":"de/rosa.mp3","es|el color":"es/el-color.mp3","de|die Farbe":"de/die-farbe.mp3","es|morado":"es/morado.mp3","de|lila":"de/lila.mp3","es|turquesa":"es/turquesa.mp3","de|türkis":"de/tuerkis.mp3","es|beige":"es/beige.mp3","de|beige":"de/beige.mp3","es|dorado":"es/dorado.mp3","de|golden":"de/golden.mp3","es|plateado":"es/plateado.mp3","de|silbern":"de/silbern.mp3","es|celeste":"es/celeste.mp3","de|hellblau":"de/hellblau.mp3","es|claro":"es/claro.mp3","de|hell":"de/hell.mp3","es|oscuro":"es/oscuro.mp3","de|dunkel":"de/dunkel.mp3","es|cero":"es/cero.mp3","de|0":"de/0.mp3","es|uno":"es/uno.mp3","de|1":"de/1.mp3","es|dos":"es/dos.mp3","de|2":"de/2.mp3","es|tres":"es/tres.mp3","de|3":"de/3.mp3","es|cuatro":"es/cuatro.mp3","de|4":"de/4.mp3","es|cinco":"es/cinco.mp3","de|5":"de/5.mp3","es|seis":"es/seis.mp3","de|6":"de/6.mp3","es|siete":"es/siete.mp3","de|7":"de/7.mp3","es|ocho":"es/ocho.mp3","de|8":"de/8.mp3","es|nueve":"es/nueve.mp3","de|9":"de/9.mp3","es|diez":"es/diez.mp3","de|10":"de/10.mp3","es|once":"es/once.mp3","de|11":"de/11.mp3","es|doce":"es/doce.mp3","de|12":"de/12.mp3","es|trece":"es/trece.mp3","de|13":"de/13.mp3","es|catorce":"es/catorce.mp3","de|14":"de/14.mp3","es|quince":"es/quince.mp3","de|15":"de/15.mp3","es|dieciséis":"es/dieciseis.mp3","de|16":"de/16.mp3","es|diecisiete":"es/diecisiete.mp3","de|17":"de/17.mp3","es|dieciocho":"es/dieciocho.mp3","de|18":"de/18.mp3","es|diecinueve":"es/diecinueve.mp3","de|19":"de/19.mp3","es|veinte":"es/veinte.mp3","de|20":"de/20.mp3","es|veintiuno":"es/veintiuno.mp3","de|21":"de/21.mp3","es|veintidós":"es/veintidos.mp3","de|22":"de/22.mp3","es|veintitrés":"es/veintitres.mp3","de|23":"de/23.mp3","es|veinticuatro":"es/veinticuatro.mp3","de|24":"de/24.mp3","es|veinticinco":"es/veinticinco.mp3","de|25":"de/25.mp3","es|veintiséis":"es/veintiseis.mp3","de|26":"de/26.mp3","es|veintisiete":"es/veintisiete.mp3","de|27":"de/27.mp3","es|veintiocho":"es/veintiocho.mp3","de|28":"de/28.mp3","es|veintinueve":"es/veintinueve.mp3","de|29":"de/29.mp3","es|treinta":"es/treinta.mp3","de|30":"de/30.mp3","es|treinta y uno":"es/treinta-y-uno.mp3","de|31":"de/31.mp3","es|treinta y dos":"es/treinta-y-dos.mp3","de|32":"de/32.mp3","es|treinta y tres":"es/treinta-y-tres.mp3","de|33":"de/33.mp3","es|treinta y cuatro":"es/treinta-y-cuatro.mp3","de|34":"de/34.mp3","es|treinta y cinco":"es/treinta-y-cinco.mp3","de|35":"de/35.mp3","es|treinta y seis":"es/treinta-y-seis.mp3","de|36":"de/36.mp3","es|treinta y siete":"es/treinta-y-siete.mp3","de|37":"de/37.mp3","es|treinta y ocho":"es/treinta-y-ocho.mp3","de|38":"de/38.mp3","es|treinta y nueve":"es/treinta-y-nueve.mp3","de|39":"de/39.mp3","es|cuarenta":"es/cuarenta.mp3","de|40":"de/40.mp3","es|cuarenta y uno":"es/cuarenta-y-uno.mp3","de|41":"de/41.mp3","es|cuarenta y dos":"es/cuarenta-y-dos.mp3","de|42":"de/42.mp3","es|cuarenta y tres":"es/cuarenta-y-tres.mp3","de|43":"de/43.mp3","es|cuarenta y cuatro":"es/cuarenta-y-cuatro.mp3","de|44":"de/44.mp3","es|cuarenta y cinco":"es/cuarenta-y-cinco.mp3","de|45":"de/45.mp3","es|cuarenta y seis":"es/cuarenta-y-seis.mp3","de|46":"de/46.mp3","es|cuarenta y siete":"es/cuarenta-y-siete.mp3","de|47":"de/47.mp3","es|cuarenta y ocho":"es/cuarenta-y-ocho.mp3","de|48":"de/48.mp3","es|cuarenta y nueve":"es/cuarenta-y-nueve.mp3","de|49":"de/49.mp3","es|cincuenta":"es/cincuenta.mp3","de|50":"de/50.mp3","es|cincuenta y uno":"es/cincuenta-y-uno.mp3","de|51":"de/51.mp3","es|cincuenta y dos":"es/cincuenta-y-dos.mp3","de|52":"de/52.mp3","es|cincuenta y tres":"es/cincuenta-y-tres.mp3","de|53":"de/53.mp3","es|cincuenta y cuatro":"es/cincuenta-y-cuatro.mp3","de|54":"de/54.mp3","es|cincuenta y cinco":"es/cincuenta-y-cinco.mp3","de|55":"de/55.mp3","es|cincuenta y seis":"es/cincuenta-y-seis.mp3","de|56":"de/56.mp3","es|cincuenta y siete":"es/cincuenta-y-siete.mp3","de|57":"de/57.mp3","es|cincuenta y ocho":"es/cincuenta-y-ocho.mp3","de|58":"de/58.mp3","es|cincuenta y nueve":"es/cincuenta-y-nueve.mp3","de|59":"de/59.mp3","es|sesenta":"es/sesenta.mp3","de|60":"de/60.mp3","es|sesenta y uno":"es/sesenta-y-uno.mp3","de|61":"de/61.mp3","es|sesenta y dos":"es/sesenta-y-dos.mp3","de|62":"de/62.mp3","es|sesenta y tres":"es/sesenta-y-tres.mp3","de|63":"de/63.mp3","es|sesenta y cuatro":"es/sesenta-y-cuatro.mp3","de|64":"de/64.mp3","es|sesenta y cinco":"es/sesenta-y-cinco.mp3","de|65":"de/65.mp3","es|sesenta y seis":"es/sesenta-y-seis.mp3","de|66":"de/66.mp3","es|sesenta y siete":"es/sesenta-y-siete.mp3","de|67":"de/67.mp3","es|sesenta y ocho":"es/sesenta-y-ocho.mp3","de|68":"de/68.mp3","es|sesenta y nueve":"es/sesenta-y-nueve.mp3","de|69":"de/69.mp3","es|setenta":"es/setenta.mp3","de|70":"de/70.mp3","es|setenta y uno":"es/setenta-y-uno.mp3","de|71":"de/71.mp3","es|setenta y dos":"es/setenta-y-dos.mp3","de|72":"de/72.mp3","es|setenta y tres":"es/setenta-y-tres.mp3","de|73":"de/73.mp3","es|setenta y cuatro":"es/setenta-y-cuatro.mp3","de|74":"de/74.mp3","es|setenta y cinco":"es/setenta-y-cinco.mp3","de|75":"de/75.mp3","es|setenta y seis":"es/setenta-y-seis.mp3","de|76":"de/76.mp3","es|setenta y siete":"es/setenta-y-siete.mp3","de|77":"de/77.mp3","es|setenta y ocho":"es/setenta-y-ocho.mp3","de|78":"de/78.mp3","es|setenta y nueve":"es/setenta-y-nueve.mp3","de|79":"de/79.mp3","es|ochenta":"es/ochenta.mp3","de|80":"de/80.mp3","es|ochenta y uno":"es/ochenta-y-uno.mp3","de|81":"de/81.mp3","es|ochenta y dos":"es/ochenta-y-dos.mp3","de|82":"de/82.mp3","es|ochenta y tres":"es/ochenta-y-tres.mp3","de|83":"de/83.mp3","es|ochenta y cuatro":"es/ochenta-y-cuatro.mp3","de|84":"de/84.mp3","es|ochenta y cinco":"es/ochenta-y-cinco.mp3","de|85":"de/85.mp3","es|ochenta y seis":"es/ochenta-y-seis.mp3","de|86":"de/86.mp3","es|ochenta y siete":"es/ochenta-y-siete.mp3","de|87":"de/87.mp3","es|ochenta y ocho":"es/ochenta-y-ocho.mp3","de|88":"de/88.mp3","es|ochenta y nueve":"es/ochenta-y-nueve.mp3","de|89":"de/89.mp3","es|noventa":"es/noventa.mp3","de|90":"de/90.mp3","es|noventa y uno":"es/noventa-y-uno.mp3","de|91":"de/91.mp3","es|noventa y dos":"es/noventa-y-dos.mp3","de|92":"de/92.mp3","es|noventa y tres":"es/noventa-y-tres.mp3","de|93":"de/93.mp3","es|noventa y cuatro":"es/noventa-y-cuatro.mp3","de|94":"de/94.mp3","es|noventa y cinco":"es/noventa-y-cinco.mp3","de|95":"de/95.mp3","es|noventa y seis":"es/noventa-y-seis.mp3","de|96":"de/96.mp3","es|noventa y siete":"es/noventa-y-siete.mp3","de|97":"de/97.mp3","es|noventa y ocho":"es/noventa-y-ocho.mp3","de|98":"de/98.mp3","es|noventa y nueve":"es/noventa-y-nueve.mp3","de|99":"de/99.mp3","es|cien":"es/cien.mp3","de|100":"de/100.mp3","es|doscientos":"es/doscientos.mp3","de|200":"de/200.mp3","es|quinientos":"es/quinientos.mp3","de|500":"de/500.mp3","es|mil":"es/mil.mp3","de|1000":"de/1000.mp3"};
+// „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort. Muss zu tools/gen_audio.py passen.
+function ttsText(text,lang){return lang==="es"?text.replace(/\s*\/\s*/g,", ")+".":text.replace(/\s*\/\s*/g," oder ")}
+const vox=typeof Audio==="function"?new Audio():null;
+if(vox)vox.preload="auto";
+function hasClip(text,lang){return !!AUDIO[lang+"|"+String(text).trim()]}
+// Spielt die Aufnahme; liefert false, wenn es keine gibt oder sie nicht abspielbar ist (dann übernimmt die Handy-Stimme)
+function playClip(text,lang){
+  const f=AUDIO[lang+"|"+String(text).trim()];
+  if(!f||!vox)return Promise.resolve(false);
+  return new Promise(res=>{
+    let done=false,started=false;
+    const fin=ok=>{if(done)return;done=true;clearTimeout(t);vox.onended=vox.onerror=vox.onplaying=null;res(ok)};
+    const t=setTimeout(()=>fin(started),6000);
+    vox.onplaying=()=>{started=true};
+    vox.onended=()=>fin(true);vox.onerror=()=>fin(false);
+    try{vox.pause();vox.muted=false;vox.src="audio/"+f;const p=vox.play();p&&p.catch&&p.catch(()=>fin(false))}catch(e){fin(false)}
+  });
+}
+// iOS: das <audio> muss einmal beim Tippen gestartet werden, danach darf es von selbst spielen
+function unlockVox(){
+  const f=Object.values(AUDIO)[0]; if(!vox||!f||vox.dataset.ok)return;
+  try{vox.muted=true;vox.src="audio/"+f;const p=vox.play();const re=()=>{vox.pause();vox.muted=false;vox.dataset.ok="1"};p&&p.then?p.then(re,()=>{vox.muted=false}):re()}catch(e){}
+}
 function speak(text){
+  if(!text)return;
+  try{tts&&tts.cancel()}catch(e){}
+  if(hasClip(text,"es")){playClip(text,"es").then(ok=>{if(!ok)speakTTS(text)});return}
+  speakTTS(text);
+}
+function speakTTS(text){
   if(!tts||!text)return;
   try{
     tts.cancel();
-    // „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort
-    const u=new SpeechSynthesisUtterance(text.replace(/\s*\/\s*/g,", ")+".");
+    const u=new SpeechSynthesisUtterance(ttsText(text,"es"));
     if(!esVoice)findVoice();
     const v=freshVoice(esVoice);
     u.lang=v?v.lang.replace("_","-"):"es-ES"; if(v)u.voice=v;
@@ -656,11 +686,15 @@ function voiceFor(lang){
 }
 
 // Spricht einen Text und wartet, bis er fertig ist
-function say(text, lang){
+async function say(text, lang){
+  if(text&&await playClip(text,lang))return wait(120);
+  return sayTTS(text,lang);
+}
+function sayTTS(text, lang){
   return new Promise(res=>{
     if(!tts||!text)return res();
     const es=lang==="es";
-    const u=new SpeechSynthesisUtterance(es?text.replace(/\s*\/\s*/g,", ")+".":text);
+    const u=new SpeechSynthesisUtterance(ttsText(text,lang));
     const v=voiceFor(lang);
     u.lang=v?v.lang.replace("_","-"):(es?"es-ES":"de-DE"); if(v)u.voice=v;
     u.rate=es?.9:1; u.volume=1;
@@ -903,7 +937,7 @@ async function voiceTurn(){
   cur=pickVoiceCard();
   const c=deck()[cur], v=item(c), es=c.dir==="es";
   const ansLang=es?"de":"es", ans=es?v[0]:v[1];
-  const qText=es?v[1]:c.dir==="num"?v[0].replace(/\D/g,""):v[0].replace(/\s*\/\s*/g," oder ");
+  const qText=es?v[1]:c.dir==="num"?v[0].replace(/\D/g,""):v[0];
   const qLang=es?"es":"de";
   const useMic=vm.mic&&SR&&!rec.denied;
   vmPrompt(c);
@@ -959,6 +993,8 @@ async function voiceTurn(){
 function voiceInfo(){
   findVoice();findDeVoice();
   const e=freshVoice(esVoice), d=freshVoice(deVoice);
+  const n=Object.keys(AUDIO).length;
+  if(n)return `🎧 KI-Stimmen: Alex 🇪🇸 · Thorsten 🇩🇪 (${n} Aufnahmen). Für alles andere: ${e?e.name:"–"} · ${d?d.name:"Standard"}`;
   if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Lesen & Sprechen › Stimmen › Spanisch.";
   const lvl=v=>["einfach","Erweitert","Premium"][voiceTier(v)]||"";
   let t=`Stimmen: 🇪🇸 ${e.name} (${lvl(e)}) · 🇩🇪 ${d?`${d.name} (${lvl(d)})`:"Standard"}`;
@@ -968,7 +1004,7 @@ function voiceInfo(){
 function startVoice(){
   if(!tts){vmSet("Dein Gerät kann nicht vorlesen.","bad");return}
   // Alles, was iOS „beim Tippen“ verlangt, passiert hier synchron
-  unlockTTS();unlockSfx();
+  unlockTTS();unlockSfx();unlockVox();
   if(vm.mic&&SR)warmupMic();
   rec.denied=false;rec.silentRun=0;
   vm.on=true;vm.token++;vm.block=0;vm.blockDir=null;vmButtons();
@@ -980,6 +1016,7 @@ function stopVoice(){
   vm.on=false;vm.token++;
   recAbort();
   try{tts&&tts.cancel()}catch(e){}
+  try{vox&&vox.pause()}catch(e){}
   try{vm.lock&&vm.lock.release()}catch(e){};vm.lock=null;
   vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
 }

@@ -441,12 +441,42 @@ function stepVoice(d){
   try{localStorage.setItem(VOICE_KEY,esVoice.voiceURI)}catch(e){}
   renderVoice();speak("¡Hola! Aprendo español");
 }
+// ---- Aufnahmen: vorab mit KI-Stimmen erzeugt (tools/gen_audio.py), beim Bauen eingesetzt ----
+const AUDIO={};
+// „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort. Muss zu tools/gen_audio.py passen.
+function ttsText(text,lang){return lang==="es"?text.replace(/\s*\/\s*/g,", ")+".":text.replace(/\s*\/\s*/g," oder ")}
+const vox=typeof Audio==="function"?new Audio():null;
+if(vox)vox.preload="auto";
+function hasClip(text,lang){return !!AUDIO[lang+"|"+String(text).trim()]}
+// Spielt die Aufnahme; liefert false, wenn es keine gibt oder sie nicht abspielbar ist (dann übernimmt die Handy-Stimme)
+function playClip(text,lang){
+  const f=AUDIO[lang+"|"+String(text).trim()];
+  if(!f||!vox)return Promise.resolve(false);
+  return new Promise(res=>{
+    let done=false,started=false;
+    const fin=ok=>{if(done)return;done=true;clearTimeout(t);vox.onended=vox.onerror=vox.onplaying=null;res(ok)};
+    const t=setTimeout(()=>fin(started),6000);
+    vox.onplaying=()=>{started=true};
+    vox.onended=()=>fin(true);vox.onerror=()=>fin(false);
+    try{vox.pause();vox.muted=false;vox.src="audio/"+f;const p=vox.play();p&&p.catch&&p.catch(()=>fin(false))}catch(e){fin(false)}
+  });
+}
+// iOS: das <audio> muss einmal beim Tippen gestartet werden, danach darf es von selbst spielen
+function unlockVox(){
+  const f=Object.values(AUDIO)[0]; if(!vox||!f||vox.dataset.ok)return;
+  try{vox.muted=true;vox.src="audio/"+f;const p=vox.play();const re=()=>{vox.pause();vox.muted=false;vox.dataset.ok="1"};p&&p.then?p.then(re,()=>{vox.muted=false}):re()}catch(e){}
+}
 function speak(text){
+  if(!text)return;
+  try{tts&&tts.cancel()}catch(e){}
+  if(hasClip(text,"es")){playClip(text,"es").then(ok=>{if(!ok)speakTTS(text)});return}
+  speakTTS(text);
+}
+function speakTTS(text){
   if(!tts||!text)return;
   try{
     tts.cancel();
-    // „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort
-    const u=new SpeechSynthesisUtterance(text.replace(/\s*\/\s*/g,", ")+".");
+    const u=new SpeechSynthesisUtterance(ttsText(text,"es"));
     if(!esVoice)findVoice();
     const v=freshVoice(esVoice);
     u.lang=v?v.lang.replace("_","-"):"es-ES"; if(v)u.voice=v;

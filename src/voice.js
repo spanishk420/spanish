@@ -23,11 +23,15 @@ function voiceFor(lang){
 }
 
 // Spricht einen Text und wartet, bis er fertig ist
-function say(text, lang){
+async function say(text, lang){
+  if(text&&await playClip(text,lang))return wait(120);
+  return sayTTS(text,lang);
+}
+function sayTTS(text, lang){
   return new Promise(res=>{
     if(!tts||!text)return res();
     const es=lang==="es";
-    const u=new SpeechSynthesisUtterance(es?text.replace(/\s*\/\s*/g,", ")+".":text);
+    const u=new SpeechSynthesisUtterance(ttsText(text,lang));
     const v=voiceFor(lang);
     u.lang=v?v.lang.replace("_","-"):(es?"es-ES":"de-DE"); if(v)u.voice=v;
     u.rate=es?.9:1; u.volume=1;
@@ -270,7 +274,7 @@ async function voiceTurn(){
   cur=pickVoiceCard();
   const c=deck()[cur], v=item(c), es=c.dir==="es";
   const ansLang=es?"de":"es", ans=es?v[0]:v[1];
-  const qText=es?v[1]:c.dir==="num"?v[0].replace(/\D/g,""):v[0].replace(/\s*\/\s*/g," oder ");
+  const qText=es?v[1]:c.dir==="num"?v[0].replace(/\D/g,""):v[0];
   const qLang=es?"es":"de";
   const useMic=vm.mic&&SR&&!rec.denied;
   vmPrompt(c);
@@ -326,6 +330,8 @@ async function voiceTurn(){
 function voiceInfo(){
   findVoice();findDeVoice();
   const e=freshVoice(esVoice), d=freshVoice(deVoice);
+  const n=Object.keys(AUDIO).length;
+  if(n)return `🎧 KI-Stimmen: Alex 🇪🇸 · Thorsten 🇩🇪 (${n} Aufnahmen). Für alles andere: ${e?e.name:"–"} · ${d?d.name:"Standard"}`;
   if(!e)return "⚠️ Keine spanische Stimme gefunden. Lade eine unter Einstellungen › Bedienungshilfen › Lesen & Sprechen › Stimmen › Spanisch.";
   const lvl=v=>["einfach","Erweitert","Premium"][voiceTier(v)]||"";
   let t=`Stimmen: 🇪🇸 ${e.name} (${lvl(e)}) · 🇩🇪 ${d?`${d.name} (${lvl(d)})`:"Standard"}`;
@@ -335,7 +341,7 @@ function voiceInfo(){
 function startVoice(){
   if(!tts){vmSet("Dein Gerät kann nicht vorlesen.","bad");return}
   // Alles, was iOS „beim Tippen“ verlangt, passiert hier synchron
-  unlockTTS();unlockSfx();
+  unlockTTS();unlockSfx();unlockVox();
   if(vm.mic&&SR)warmupMic();
   rec.denied=false;rec.silentRun=0;
   vm.on=true;vm.token++;vm.block=0;vm.blockDir=null;vmButtons();
@@ -347,6 +353,7 @@ function stopVoice(){
   vm.on=false;vm.token++;
   recAbort();
   try{tts&&tts.cancel()}catch(e){}
+  try{vox&&vox.pause()}catch(e){}
   try{vm.lock&&vm.lock.release()}catch(e){};vm.lock=null;
   vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
 }

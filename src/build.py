@@ -127,5 +127,10 @@ s = rep(s, "state=load();show(\"home\");\n</script>",
         voice_js + "\nstate=load();show(\"home\");\n"
         "if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));\n</script>\n</body>\n</html>")
 s = rep(s, "</style>\n", "</style>\n</head>\n<body>\n")
+# Aufnahmen-Liste einsetzen (audio/manifest.json, erzeugt von tools/gen_audio.py)
+import json
+mf = here.parent / "audio" / "manifest.json"
+audio_map = json.loads(mf.read_text(encoding="utf-8")) if mf.exists() else {}
+s = rep(s, "const AUDIO={};", "const AUDIO=" + json.dumps(audio_map, ensure_ascii=False, separators=(",", ":")) + ";")
 out.write_text(s, encoding="utf-8")
 print("wrote", out, len(s))
