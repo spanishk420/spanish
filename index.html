@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Clonelingo</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#1F4C9A">
@@ -21,6 +21,7 @@
 .app{padding-top:var(--top)!important}
 body{margin:0;font-size:16px;line-height:1.35}
 [hidden]{display:none!important}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 /* Layout: two views. Chapter overview (list of chapters with progress) → one-screen flashcard trainer */
 :root{
   --bg:#EEF2F7; --surface:#FFFFFF; --ink:#16233A; --muted:#5D6B82;
@@ -365,7 +366,7 @@ body.muted .bubble .spk{display:none}
     <div class="vdiag" id="sDiag"></div>
   </div>
   <button class="wipe" id="wipe" type="button">Gesamten Fortschritt zurücksetzen</button>
-  <p class="vtip">Version 18</p>
+  <p class="vtip">Version 19</p>
 </div>
 
 <div class="app" id="lesson" hidden>
@@ -1816,6 +1817,9 @@ document.addEventListener("keydown",e=>{
 });
 
 state=load();show("home");
+// Zoomen verhindern (Wunsch des Nutzers): Zwei-Finger-Zoom und Doppeltippen abfangen
+for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>

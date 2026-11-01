@@ -40,6 +40,9 @@ Fortschritt nur in localStorage: Karten-Level `verbos-v2` (wird auch von Lektion
 - Diagnose: im Sprachmodus Zeile mit Stimmen / Mikro-Fehlern; „🧪 Mikro testen“ in ⚙️ Einstellungen (Zahnrad oben links auf der Startseite, Ansicht #settings in build.py). Nach 2 stillen Runden Hinweis (Home-Bildschirm-App vs. Safari, Siri & Diktieren).
 - Offen: Bestätigung auf echtem iPhone, v. a. ob Erkennung in der Home-Bildschirm-App geht.
 
+## Zoom
+Zoomen ist auf Wunsch des Nutzers gesperrt: viewport `user-scalable=no`, `touch-action:manipulation` (Doppeltippen), gesturestart/touchmove mit 2 Fingern abgefangen (build.py). Kein touchend-Abfangen, das würde schnelle Tipps verschlucken. Eingabefelder brauchen ≥16px Schrift, sonst zoomt iOS beim Fokus.
+
 ## Privatsphäre
 - Repo ist öffentlich. Keine persönlichen Daten committen. Commits als `Claude <noreply@anthropic.com>`.
 - Kein Impressum, solange die App rein privat genutzt wird (Nutzer + Freundin).

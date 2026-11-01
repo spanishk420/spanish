@@ -17,7 +17,7 @@ head = """<!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Clonelingo</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#1F4C9A">
@@ -37,6 +37,7 @@ base_css = """*,*::before,*::after{box-sizing:border-box}
 .app{padding-top:var(--top)!important}
 body{margin:0;font-size:16px;line-height:1.35}
 [hidden]{display:none!important}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 """
 s = rep(s, "<style>\n", "<style>\n" + base_css)
 s = rep(s, "html,body{height:100%}", "html,body{height:100%}\nhtml{height:100dvh}")
@@ -95,6 +96,9 @@ s = rep(s, "\n<script>\n", voice_html + "\n<script>\n")
 
 s = rep(s, "state=load();show(\"home\");\n</script>",
         voice_js + "\n" + game_js + "\nstate=load();show(\"home\");\n"
+        "// Zoomen verhindern (Wunsch des Nutzers): Zwei-Finger-Zoom und Doppeltippen abfangen\n"
+        "for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});\n"
+        "document.addEventListener('touchmove',e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});\n"
         "if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));\n</script>\n</body>\n</html>")
 s = rep(s, "</style>\n", "</style>\n</head>\n<body>\n")
 s = rep(s, "{{VERSION}}", version)
