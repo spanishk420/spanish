@@ -33,7 +33,8 @@ s = src
 s = rep(s, '<title>Verbos Karteikarten</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n', head)
 
 base_css = """*,*::before,*::after{box-sizing:border-box}
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root{--top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+.app{padding-top:var(--top)!important}
 body{margin:0;font-size:16px;line-height:1.35}
 [hidden]{display:none!important}
 """

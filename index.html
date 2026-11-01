@@ -17,7 +17,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <style>
 *,*::before,*::after{box-sizing:border-box}
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root{--top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+.app{padding-top:var(--top)!important}
 body{margin:0;font-size:16px;line-height:1.35}
 [hidden]{display:none!important}
 /* Layout: two views. Chapter overview (list of chapters with progress) → one-screen flashcard trainer */
@@ -304,8 +305,8 @@ h1 span{color:var(--sol)}
 
 /* Kopfleiste bleibt beim Scrollen oben stehen */
 #home .sticky{position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:10px;
-  margin:-16px calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;padding:16px max(16px,env(safe-area-inset-left,0px)) 10px;
-  padding-top:max(16px,env(safe-area-inset-top,0px));background:var(--bg);box-shadow:0 1px 0 var(--line)}
+  margin:calc(-1*var(--top)) calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;
+  padding:var(--top) max(16px,env(safe-area-inset-left,0px)) 8px;background:var(--bg);box-shadow:0 1px 0 var(--line)}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}.btn:active{transform:none}}
 </style>
 </head>
@@ -353,7 +354,7 @@ h1 span{color:var(--sol)}
     <div class="vdiag" id="sDiag"></div>
   </div>
   <button class="wipe" id="wipe" type="button">Gesamten Fortschritt zurücksetzen</button>
-  <p class="vtip">Version 16</p>
+  <p class="vtip">Version 17</p>
 </div>
 
 <div class="app" id="lesson" hidden>
