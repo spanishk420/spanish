@@ -134,6 +134,16 @@ h1 span{color:var(--sol)}
   <div class="path" id="path"></div>
 </div>
 
+<div class="modal" id="refreshModal" hidden role="dialog" aria-modal="true" aria-labelledby="rmTitle">
+  <div class="mcard">
+    <div class="memoji">🌅</div>
+    <h2 id="rmTitle">¡Buenos días!</h2>
+    <p>Zeit für deine tägliche Auffrischung: ein paar Wörter, die dir schwerfielen. Dauert etwa 2 Minuten.</p>
+    <button class="gbtn" id="rmGo" type="button">Los geht's</button>
+    <button class="mlater" id="rmLater" type="button">Später</button>
+  </div>
+</div>
+
 <div class="app" id="settings" hidden>
   <header>
     <button class="ghost" id="sBack" type="button">‹ Zurück</button>
@@ -170,6 +180,7 @@ h1 span{color:var(--sol)}
   <div id="lsMain" class="lsmain">
     <header class="lshead">
       <button class="lsclose" id="lsClose" type="button" aria-label="Lektion beenden">✕</button>
+      <span class="lsmode" id="lsMode" hidden></span>
       <div class="bar lsbar" aria-hidden="true"><i id="lsBar"></i></div>
       <button class="lsmute" id="lsMute" type="button" aria-label="Ton ausschalten">🔊</button>
       <span class="lshearts" id="lsHearts">❤️ 5</span>

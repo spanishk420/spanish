@@ -49,12 +49,43 @@ function unitLessons(u){
   }
   // Abschluss: Wiederholung der ganzen Einheit
   out.push({id:`${u.ch}:review`,idx:items.map((v,i)=>i),review:true,label:"Wiederholung"});
+  // Boss: schwerer Abschlusstest, schaltet das nächste Kapitel frei
+  out.push({id:`${u.ch}:boss`,idx:items.map((v,i)=>i),boss:true,label:"Boss"});
   return out;
 }
 // Anteil der Karten einer Lektion, die schon „sitzen“
 function lessonKnown(u,l){
   const cards=DECKS[u.ch].filter(c=>l.idx.includes(c.i));
   return cards.filter(c=>state.c[c.id].lv>=3).length/cards.length;
+}
+
+// Kapitel offen: erstes Kapitel, Boss des vorigen besiegt, oder schon angefangen (alter Fortschritt bleibt nutzbar)
+const startedUnit=ch=>Object.keys(game.done).some(k=>k.startsWith(ch+":"));
+function unitOpen(ui){return ui===0||!!(game.boss||{})[UNITS[ui-1].ch]||startedUnit(UNITS[ui].ch)}
+
+// ---- Tägliche Auffrischung ----
+// Gelernt = Wörter aus Lektionen, die schon geschafft wurden
+function learnedItems(){
+  const out=[];
+  for(const u of UNITS)for(const l of unitLessons(u)){
+    if(l.review||l.boss||!game.done[l.id])continue;
+    for(const i of l.idx)out.push({ch:u.ch,i});
+  }
+  return out;
+}
+const refreshDone=()=>game.refreshDay===dayStr();
+const refreshAvailable=()=>!refreshDone()&&learnedItems().length>=4;
+function startRefresh(){
+  hideRefreshModal();
+  startLesson(null,{id:"refresh",refresh:true,label:"Auffrischung"});
+}
+function showRefreshModal(){$("refreshModal").hidden=false}
+function hideRefreshModal(){$("refreshModal").hidden=true}
+// Beim ersten Öffnen des Tages einmal anbieten
+function maybePromptRefresh(){
+  if(!refreshAvailable()||game.refreshPrompt===dayStr())return;
+  game.refreshPrompt=dayStr();saveGame();
+  showRefreshModal();
 }
 
 // ---- Startseite: Pfad ----
@@ -73,15 +104,26 @@ function renderPath(){
   $("gGoalTxt").textContent=tx>=GOAL_XP?`Tagesziel geschafft! ${tx} XP heute 🎉`:`Tagesziel: ${tx} / ${GOAL_XP} XP`;
   $("gGoalBar").style.width=Math.min(100,tx/GOAL_XP*100)+"%";
   const path=$("path");path.textContent="";
+  // Auffrischungs-Karte oben
+  if(learnedItems().length>=4){
+    const rc=document.createElement("button");rc.type="button";rc.className="refresh"+(refreshDone()?" done":"");
+    rc.innerHTML=refreshDone()?`<span class="ri">✅</span><span><b>Heute schon aufgefrischt</b><small>Nochmal? Tippen zum Wiederholen</small></span>`
+      :`<span class="ri">🌅</span><span><b>Tägliche Auffrischung</b><small>Ein paar Wörter, die dir schwerfielen</small></span><span class="go">›</span>`;
+    rc.addEventListener("click",startRefresh);
+    path.appendChild(rc);
+  }
   UNITS.forEach((u,ui)=>{
+    const open=unitOpen(ui);
     const ls=unitLessons(u), sec=document.createElement("section");sec.className="unit "+u.color;
     const ban=document.createElement("div");ban.className="ubanner";
     ban.innerHTML=`<div><h3></h3><p></p></div><button class="ubtn" type="button">📇 Üben</button>`;
-    ban.querySelector("h3").textContent=`Kapitel ${ui+1} · ${u.title}`;ban.querySelector("p").textContent=u.desc;
-    ban.querySelector(".ubtn").addEventListener("click",()=>openChapter(u.ch));
+    ban.querySelector("h3").textContent=`Kapitel ${ui+1} · ${u.title}`;
+    ban.querySelector("p").textContent=open?u.desc:`🔒 Besiege den Boss von Kapitel ${ui} 👹`;
+    if(!open){sec.classList.add("lockedunit");ban.querySelector(".ubtn").remove()}
+    if(open)ban.querySelector(".ubtn").addEventListener("click",()=>openChapter(u.ch));
     sec.appendChild(ban);
     const list=document.createElement("div");list.className="lessons";
-    const firstOpen=ls.findIndex(l=>!game.done[l.id]);
+    const firstOpen=open?ls.findIndex(l=>!game.done[l.id]):-1;
     ls.forEach((l,index)=>{
       // Zickzack wie im Original: Einrückung läuft in Achterzyklen hin und her
       const cyc=index%8; let ind;
@@ -89,18 +131,19 @@ function renderPath(){
       const done=!!game.done[l.id], current=index===firstOpen, locked=!done&&!current;
       const wrap=document.createElement("div");wrap.className="lwrap"+(current?" cur":"");wrap.style.transform=`translateX(${ind*-42}px)`;
       const b=document.createElement("button");b.type="button";
-      b.className="lnode"+(done?" done":"")+(current?" current":"")+(locked?" locked":"")+(l.review?" crown":"");
-      b.innerHTML=`<span class="licon">${l.review?"👑":done?"✓":"★"}</span>`;
-      b.setAttribute("aria-label",`${l.review?"Wiederholung":"Lektion "+(index+1)}: ${l.label}${done?" (geschafft)":locked?" (gesperrt)":""}`);
+      b.className="lnode"+(done?" done":"")+(current?" current":"")+(locked?" locked":"")+(l.review?" crown":"")+(l.boss?" boss":"");
+      b.innerHTML=`<span class="licon">${l.boss?(done?"🏆":"👹"):l.review?"👑":done?"✓":"★"}</span>`;
+      b.setAttribute("aria-label",`${l.boss?"Boss":l.review?"Wiederholung":"Lektion "+(index+1)}: ${l.label}${done?" (geschafft)":locked?" (gesperrt)":""}`);
       if(locked)b.disabled=true;
       b.addEventListener("click",()=>startLesson(u,l));
       if(current){
         const ring=document.createElement("div");ring.className="ring";
         ring.style.setProperty("--p",Math.round(lessonKnown(u,l)*100));
-        const tip=document.createElement("div");tip.className="ltip";tip.textContent=index===0&&!Object.keys(game.done).some(k=>k.startsWith(u.ch+":"))?"Start":"Weiter";
+        const tip=document.createElement("div");tip.className="ltip";tip.textContent=l.boss?"Boss!":index===0&&!startedUnit(u.ch)?"Start":"Weiter";if(l.boss)tip.classList.add("bosstip");
         wrap.append(tip,ring);ring.appendChild(b);
       }else wrap.appendChild(b);
-      const cap=document.createElement("div");cap.className="lcap";cap.textContent=l.label;wrap.appendChild(cap);
+      const cap=document.createElement("div");cap.className="lcap";cap.textContent=l.boss?"Boss · schaltet Kapitel "+(ui+2)+" frei":l.label;
+      if(l.boss&&ui===UNITS.length-1)cap.textContent="Boss · Abschlussprüfung";wrap.appendChild(cap);
       list.appendChild(wrap);
     });
     sec.appendChild(list);path.appendChild(sec);
@@ -150,11 +193,39 @@ function makeTask(ch,i,type,pool){
       const tiles=shuffle(words.concat([...new Set(extra)].slice(0,Math.min(3,Math.max(2,6-words.length)))));
       return {type,ch,i,card:card("de"),title:"Bau den Satz auf Spanisch",prompt:v[0],promptLang:"de",answer:v[1],tiles};
     }
+    case "listenType": return {type,ch,i,card:card("es"),title:"Hör zu und schreib auf Spanisch",listen:v[1],answer:v[1]};
     case "type": return {type,ch,i,card:card("de"),title:num?"Schreib die Zahl auf Spanisch":"Schreib auf Spanisch",
       prompt:num?numStr(v):v[0],promptLang:"de",swatch:isColor(ch)?v[5]:null,answer:v[1]};
   }
 }
+function buildBoss(u){
+  // Schwer: nur selbst schreiben/bauen oder hören+schreiben, Wörter mit niedrigem Level bevorzugt
+  const ch=u.ch, items=CHAPTERS[ch].items, n=Math.min(12,items.length);
+  const lvl=i=>DECKS[ch].filter(c=>c.i===i).reduce((a,c)=>a+state.c[c.id].lv,0);
+  const pick=items.map((v,i)=>i).sort((a,b)=>lvl(a)-lvl(b)+(Math.random()-.5)*4).slice(0,n);
+  return shuffle(pick.map((i,k)=>{
+    const t=makeTask(ch,i,k%3===2?"listenType":"type",items.map((v,j)=>j));
+    t.boss=true;return t;
+  }));
+}
+function buildRefresh(){
+  // Gelernte Wörter, gewichtet nach Fehlern und niedrigem Level; gemischte Aufgaben
+  const all=learnedItems().map(x=>{
+    const cards=DECKS[x.ch].filter(c=>c.i===x.i).map(c=>state.c[c.id]);
+    const miss=cards.reduce((a,c)=>a+c.miss,0), lv=cards.reduce((a,c)=>a+c.lv,0)/cards.length;
+    return Object.assign(x,{score:miss*3+(4-lv)*2+Math.random()*3});
+  }).sort((a,b)=>b.score-a.score).slice(0,10);
+  const types=["pickEs","type","listen","pickDe","type"];
+  return shuffle(all.map((x,k)=>{
+    const pool=CHAPTERS[x.ch].items.map((v,j)=>j);
+    let ty=types[k%types.length];
+    if(isColor(x.ch)&&ty==="pickDe"&&!/gradient/.test(CHAPTERS[x.ch].items[x.i][5]||"gradient"))ty="color";
+    return makeTask(x.ch,x.i,ty,pool);
+  }));
+}
 function buildLesson(u,l){
+  if(l.boss)return buildBoss(u);
+  if(l.refresh)return buildRefresh();
   const ch=u.ch, tasks=[];
   if(l.review){
     // Wiederholung: Wörter mit niedrigem Level bevorzugt, gemischte Aufgaben
@@ -184,12 +255,14 @@ function buildLesson(u,l){
 // ---- Lektion abspielen ----
 const L={u:null,l:null,tasks:[],pos:0,total:0,correct:0,hearts:MAX_HEARTS,sel:null,status:"none",mistakes:0,firstTry:new Set(),wrongOnce:new Set()};
 function startLesson(u,l){
-  game.lastUnit=u.ch;saveGame();
+  if(u){game.lastUnit=u.ch;saveGame()}
   try{tts&&tts.cancel()}catch(e){}
   if(typeof unlockSfx==="function")unlockSfx();
-  Object.assign(L,{u,l,tasks:buildLesson(u,l),pos:0,correct:0,hearts:MAX_HEARTS,sel:null,status:"none",mistakes:0,wrongOnce:new Set()});
+  Object.assign(L,{u,l,tasks:buildLesson(u,l),pos:0,correct:0,hearts:l.boss?3:MAX_HEARTS,sel:null,status:"none",mistakes:0,wrongOnce:new Set()});
   L.total=L.tasks.length;
   show("lesson");$("lsFinish").hidden=true;$("lsMain").hidden=false;
+  $("lesson").classList.toggle("bossmode",!!l.boss);
+  $("lsMode").textContent=l.boss?"👹 Boss":l.refresh?"🌅 Auffrischung":"";$("lsMode").hidden=!l.boss&&!l.refresh;
   renderTask();
 }
 function gradeCardId(ch,id,knew){
@@ -205,7 +278,8 @@ function renderTask(){
   let t=L.tasks[L.pos];
   if(!t)return finishLesson();
   // Kein Sound: Hör-Aufgabe durch gleich schwere Aufgabe ersetzen (Spanisch wählen)
-  if(muted&&t.type==="listen"){t=L.tasks[L.pos]=makeTask(t.ch,t.i,"pickEs",L.l.idx)}
+  if(muted&&t.type==="listen"){t=L.tasks[L.pos]=makeTask(t.ch,t.i,"pickEs",CHAPTERS[t.ch].items.map((v,j)=>j))}
+  if(muted&&t.type==="listenType"){t=L.tasks[L.pos]=Object.assign(makeTask(t.ch,t.i,"type",[]),{boss:t.boss})}
   L.sel=null;L.status="none";
   renderHeader();
   $("lsTitle").textContent=t.title;
@@ -226,7 +300,8 @@ function renderTask(){
     if(t.promptLang==="es"||L.pos===0)sayWord(t.prompt,t.promptLang);
   }
   const o=$("lsOpts");o.textContent="";o.className="lsopts"+(t.options&&t.options[0].swatch?" swatches":"");
-  $("lsType").hidden=t.type!=="type";
+  const typing=t.type==="type"||t.type==="listenType";
+  $("lsType").hidden=!typing;
   if(t.type==="build"){
     L.built=[];
     o.className="lsopts build";
@@ -238,7 +313,7 @@ function renderTask(){
       bank.appendChild(b);
     });
     o.append(line,bank);
-  }else if(t.type==="type"){
+  }else if(typing){
     const inp=$("lsInp");inp.value="";inp.disabled=false;inp.className="";
     setTimeout(()=>inp.focus(),50);
   }else{
@@ -305,7 +380,7 @@ function check(){
     ok=ansOk(L.built.map(k=>t.tiles[k]).join(" "),t.answer);
     $("lsLine").classList.add(ok?"good":"bad");
     document.querySelectorAll("#lsOpts .tile").forEach(b=>b.disabled=true);
-  }else if(t.type==="type"){
+  }else if(t.type==="type"||t.type==="listenType"){
     given=$("lsInp").value; if(!given.trim())return;
     const g=grade3(given,t.answer);
     ok=g==="ok";
@@ -358,7 +433,7 @@ function setFooter(){
   msg.textContent="";
   if(L.status==="none"){
     btn.textContent="Prüfen";
-    btn.disabled=t.type==="type"?false:t.type==="build"?!L.built.length:L.sel==null;
+    btn.disabled=t.type==="type"||t.type==="listenType"?false:t.type==="build"?!L.built.length:L.sel==null;
   }else if(L.status==="correct"){
     msg.innerHTML=`<b>✓ ${["Super!","Richtig!","Genau!","¡Muy bien!","Perfekt!"][Math.floor(Math.random()*5)]}</b>`;
     btn.textContent="Weiter";btn.disabled=false;
@@ -376,20 +451,24 @@ function setFooter(){
 }
 function outOfHearts(){
   $("lsMain").hidden=true;$("lsFinish").hidden=false;
-  $("lfEmoji").textContent="💔";
-  $("lfTitle").textContent="Keine Herzen mehr";
-  $("lfText").textContent="Kein Problem, das gehört dazu. Die schwierigen Wörter kommen jetzt öfter dran. Nochmal?";
+  $("lfEmoji").textContent=L.l.boss?"👹":"💔";
+  $("lfTitle").textContent=L.l.boss?"Der Boss war stärker":"Keine Herzen mehr";
+  $("lfText").textContent=L.l.boss?"Noch nicht ganz. Übe die Lektionen nochmal und fordere ihn dann erneut heraus!":"Kein Problem, das gehört dazu. Die schwierigen Wörter kommen jetzt öfter dran. Nochmal?";
   $("lfXp").textContent="0";$("lfAcc").textContent=Math.round((L.total-L.mistakes)/L.total*100)+" %";
   $("lfAgain").hidden=false;$("lfBtn").textContent="Zum Lernpfad";
 }
 function finishLesson(){
-  const xp=L.total*XP_PER+(L.mistakes===0?5:0);
+  const xp=L.total*XP_PER+(L.mistakes===0?5:0)+(L.l.boss?20:0);
+  if(L.l.boss){game.boss=game.boss||{};game.boss[L.u.ch]=true}
+  if(L.l.refresh)game.refreshDay=dayStr();
   addXp(xp);
   game.done[L.l.id]=(game.done[L.l.id]||0)+1;saveGame();
   $("lsMain").hidden=true;$("lsFinish").hidden=false;
-  $("lfEmoji").textContent=L.mistakes===0?"🏆":"🎉";
-  $("lfTitle").textContent=L.mistakes===0?"Perfekt, ohne Fehler!":"Lektion geschafft!";
-  $("lfText").textContent=L.l.review?"Die ganze Einheit wiederholt. ¡Fantástico!":"¡Muy bien! Weiter so.";
+  const ui=L.u?UNITS.indexOf(L.u):-1;
+  $("lfEmoji").textContent=L.l.boss?"🏆":L.l.refresh?"🌅":L.mistakes===0?"🏆":"🎉";
+  $("lfTitle").textContent=L.l.boss?"Boss besiegt!":L.l.refresh?"Aufgefrischt!":L.mistakes===0?"Perfekt, ohne Fehler!":"Lektion geschafft!";
+  $("lfText").textContent=L.l.boss?(ui<UNITS.length-1?`Kapitel ${ui+2} ist jetzt freigeschaltet. ¡Increíble!`:"Alle Kapitel gemeistert. ¡Increíble!")
+    :L.l.refresh?"Die schwierigen Wörter sitzen wieder ein Stück besser.":L.l.review?"Das ganze Kapitel wiederholt. ¡Fantástico!":"¡Muy bien! Weiter so.";
   $("lfXp").textContent="+"+xp;
   $("lfAcc").textContent=Math.round((L.total-Math.min(L.mistakes,L.total))/L.total*100)+" %";
   $("lfAgain").hidden=false;$("lfBtn").textContent="Weiter";
@@ -433,3 +512,9 @@ document.addEventListener("keydown",e=>{
   if(/^[1-4]$/.test(e.key)){const t=L.tasks[L.pos];if(t&&t.options&&t.options[+e.key-1])selectOpt(+e.key-1)}
   else if(e.key==="Enter"&&!$("lsBtn").disabled){e.preventDefault();cont()}
 });
+
+$("rmGo").addEventListener("click",startRefresh);
+$("rmLater").addEventListener("click",()=>{hideRefreshModal();renderPath()});
+// Beim Start (und wenn die App am nächsten Tag wieder geöffnet wird) die Auffrischung anbieten
+setTimeout(()=>{if(!$("home").hidden)maybePromptRefresh()},400);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!$("home").hidden){renderPath();maybePromptRefresh()}});
