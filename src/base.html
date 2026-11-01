@@ -141,9 +141,11 @@ h1 span{color:var(--sol)}
     <span style="width:60px"></span>
   </header>
   <div class="sbox">
-    <h2>🔊 Vorlesen bei Karteikarten</h2>
-    <p>Liest bei den Karteikarten das spanische Wort vor. In Lektionen und im Sprachmodus wird immer vorgelesen.</p>
-    <button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button>
+    <div class="srow"><h2>🔇 Kein Sound</h2><button class="toggle" id="muteBtn" type="button" role="switch" aria-checked="false"><i></i></button></div>
+    <p>Lernen ohne Ton: nichts wird abgespielt, Hör-Aufgaben werden ersetzt.</p>
+  </div>
+  <div class="sbox">
+    <div class="srow"><h2>🔊 Karteikarten vorlesen</h2><button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button></div>
     <div class="voiceRow" id="voiceRow" hidden>
       <label>Ersatzstimme (für Texte ohne Aufnahme)</label>
       <div class="row">
@@ -155,11 +157,9 @@ h1 span{color:var(--sol)}
     </div>
   </div>
   <div class="sbox">
-    <h2>🎙️ Mikrofon testen</h2>
-    <p>Prüft, ob die Spracherkennung für den Sprachmodus funktioniert. Tippe auf den Knopf und sag etwas auf Deutsch.</p>
-    <div class="vstatus" id="sStatus" role="status" aria-live="polite"></div>
+    <div class="srow"><h2>🎙️ Mikrofon</h2><button class="sound" id="sTest" type="button">Testen</button></div>
+    <div class="vstatus" id="sStatus" role="status" aria-live="polite" hidden></div>
     <div class="vheard" id="sHeard"></div>
-    <button class="btn show" id="sTest" type="button">🧪 Mikro testen</button>
     <div class="vdiag" id="sDiag"></div>
   </div>
   <button class="wipe" id="wipe" type="button">Gesamten Fortschritt zurücksetzen</button>
@@ -171,6 +171,7 @@ h1 span{color:var(--sol)}
     <header class="lshead">
       <button class="lsclose" id="lsClose" type="button" aria-label="Lektion beenden">✕</button>
       <div class="bar lsbar" aria-hidden="true"><i id="lsBar"></i></div>
+      <button class="lsmute" id="lsMute" type="button" aria-label="Ton ausschalten">🔊</button>
       <span class="lshearts" id="lsHearts">❤️ 5</span>
     </header>
     <div class="lsbody">
@@ -593,6 +594,19 @@ function stepVoice(d){
   try{localStorage.setItem(VOICE_KEY,esVoice.voiceURI)}catch(e){}
   renderVoice();speak("¡Hola! Aprendo español");
 }
+// ---- Kein Sound: nichts abspielen (Lektionen ersetzen Hör-Aufgaben) ----
+const MUTE_KEY="clonelingo-mute";
+let muted=false;try{muted=localStorage.getItem(MUTE_KEY)==="1"}catch(e){}
+function setMuted(v){
+  muted=!!v;try{localStorage.setItem(MUTE_KEY,muted?"1":"0")}catch(e){}
+  if(muted){try{tts&&tts.cancel()}catch(e){};try{vox&&vox.pause()}catch(e){}}
+  renderMute();
+}
+function renderMute(){
+  const b=$("muteBtn");if(b)b.setAttribute("aria-checked",muted?"true":"false");
+  const l=$("lsMute");if(l){l.textContent=muted?"🔇":"🔊";l.setAttribute("aria-label",muted?"Ton einschalten":"Ton ausschalten")}
+  document.body.classList.toggle("muted",muted);
+}
 // ---- Aufnahmen: vorab mit KI-Stimmen erzeugt (tools/gen_audio.py), beim Bauen eingesetzt ----
 const AUDIO={};
 // „rojo.“ statt „rojo“: mit Punkt klingt die Betonung wie ein fertiges Wort. Muss zu tools/gen_audio.py passen.
@@ -622,7 +636,7 @@ function unlockVox(){
   try{vox.muted=true;vox.src="audio/"+f;const p=vox.play();const re=()=>{vox.pause();vox.muted=false;vox.dataset.ok="1"};p&&p.then?p.then(re,()=>{vox.muted=false}):re()}catch(e){}
 }
 function speak(text){
-  if(!text)return;
+  if(!text||muted)return;
   try{tts&&tts.cancel()}catch(e){}
   if(hasClip(text,"es")){playClip(text,"es").then(ok=>{if(!ok)speakTTS(text)});return}
   speakTTS(text);
@@ -696,6 +710,7 @@ $("ok").addEventListener("click",()=>grade(true));
 $("typeForm").addEventListener("submit",e=>{e.preventDefault();check()});
 $("nextBtn").addEventListener("click",next);
 $("soundHome").addEventListener("click",toggleSound);
+$("muteBtn").addEventListener("click",()=>setMuted(!muted));
 $("soundTrain").addEventListener("click",toggleSound);
 $("say").addEventListener("click",e=>{e.stopPropagation();speakCurrent()});
 let wipeArmed=false, wipeTimer=null;
@@ -714,7 +729,7 @@ $("wipe").addEventListener("click",()=>{
   b.textContent="Alles zurückgesetzt ✓";
   setTimeout(()=>{b.textContent="Gesamten Fortschritt zurücksetzen"},2500);
 });
-renderSound();
+renderSound();renderMute();
 if(tts){findVoice();tts.onvoiceschanged=findVoice}
 $("vPrev").addEventListener("click",()=>stepVoice(-1));
 $("vNext").addEventListener("click",()=>stepVoice(1));

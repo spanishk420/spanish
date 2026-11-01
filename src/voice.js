@@ -357,27 +357,27 @@ function stopVoice(){
   vmButtons();vmSet("Pausiert. Tippe auf Start, um weiterzumachen.");
 }
 // Mikro-Test (in den Einstellungen): hört 6 Sekunden auf Deutsch zu und zeigt an, was ankommt
-function setTest(t,cls){$("sStatus").textContent=t;$("sStatus").className="vstatus "+(cls||"")}
+function setTest(t,cls){$("sStatus").hidden=!t;$("sStatus").textContent=t||"";$("sStatus").className="vstatus "+(cls||"")}
 async function micTest(){
   if(!SR){setTest("Dieses Gerät hat keine Spracherkennung.","bad");return}
   if(vm.on)stopVoice();
   try{tts&&tts.cancel()}catch(e){}
   const my=++vm.token, alive=()=>my===vm.token&&!$("settings").hidden;
   rec.ui={heard:"sHeard",diag:"sDiag"};
-  setTest("🎙️ Sag etwas auf Deutsch …","listen");diag("");$("sHeard").textContent="";
+  setTest("Sag etwas …","listen");diag("");$("sHeard").textContent="";
   $("sTest").disabled=true;
   const r=await listen("de",null,alive,6000);
   $("sTest").disabled=false;
   if(alive()){
     if(r.denied)setTest(r.err==="service-not-allowed"?"Spracherkennung gesperrt (Siri & Diktieren aus oder Home-Bildschirm-App).":"Mikrofon nicht erlaubt.","bad");
-    else if(r.heard&&r.heard.length){rec.denied=false;setTest("✓ Mikro funktioniert","good")}
+    else if(r.heard&&r.heard.length){rec.denied=false;setTest("✓ Funktioniert","good")}
     else{setTest("✗ Nichts gehört","bad");diag(noMicHint())}
   }
   rec.ui={heard:"vHeard",diag:"vDiag"};
 }
 function openSettings(){
-  setTest(SR?"Tippe auf „Mikro testen“ und sag etwas.":"Dieses Gerät hat keine Spracherkennung.");
-  $("sHeard").textContent="";$("sDiag").textContent=tts?voiceInfo():"";
+  setTest(SR?"":"Keine Spracherkennung auf diesem Gerät.","bad");
+  $("sHeard").textContent="";$("sDiag").textContent="";renderMute();
   show("settings");
 }
 function closeSettings(){vm.token++;$("sTest").disabled=false;rec.ui={heard:"vHeard",diag:"vDiag"};show("home")}

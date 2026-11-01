@@ -202,8 +202,10 @@ function renderHeader(){
   $("lsHearts").textContent="❤️ "+L.hearts;
 }
 function renderTask(){
-  const t=L.tasks[L.pos];
+  let t=L.tasks[L.pos];
   if(!t)return finishLesson();
+  // Kein Sound: Hör-Aufgabe durch gleich schwere Aufgabe ersetzen (Spanisch wählen)
+  if(muted&&t.type==="listen"){t=L.tasks[L.pos]=makeTask(t.ch,t.i,"pickEs",L.l.idx)}
   L.sel=null;L.status="none";
   renderHeader();
   $("lsTitle").textContent=t.title;
@@ -252,6 +254,7 @@ function renderTask(){
   setFooter();
 }
 function sayWord(text,lang,slow){
+  if(muted)return;
   try{tts&&tts.cancel()}catch(e){}
   // Langsam: Aufnahme mit 70 % Tempo (Tonhöhe bleibt)
   if(vox){vox.defaultPlaybackRate=slow?.7:1;vox.playbackRate=slow?.7:1}
@@ -312,7 +315,7 @@ function check(){
       // Kleiner Fehler: kein Herz weg, aber die Aufgabe kommt nochmal
       L.status="almost";L.given=given;
       L.tasks.push(Object.assign({},t));
-      if(typeof playSfx==="function")playSfx("ok");
+      if(!muted&&typeof playSfx==="function")playSfx("ok");
       setTimeout(()=>sayWord(t.answer,"es"),350);
       renderHeader();setFooter();return;
     }
@@ -330,7 +333,7 @@ function check(){
   if(ok){
     L.status="correct";L.correct++;
     if(!L.wrongOnce.has(key))gradeCardId(t.ch,t.card,true);
-    if(typeof playSfx==="function")playSfx("ok");
+    if(!muted&&typeof playSfx==="function")playSfx("ok");
     // Nach dem Schreiben das Wort einmal vorlesen
     if(t.type==="type"||t.type==="build")setTimeout(()=>sayWord(t.answer,"es"),350);
   }else{
@@ -338,7 +341,7 @@ function check(){
     if(!L.wrongOnce.has(key)){L.wrongOnce.add(key);gradeCardId(t.ch,t.card,false)}
     // Falsche Aufgabe kommt am Ende nochmal dran
     L.tasks.push(Object.assign({},t,{options:t.options?shuffle(t.options.slice()):undefined}));
-    if(typeof playSfx==="function")playSfx("no");
+    if(!muted&&typeof playSfx==="function")playSfx("no");
     setTimeout(()=>sayWord(CHAPTERS[t.ch].items[t.i][1],"es"),450);
   }
   renderHeader();
@@ -390,7 +393,7 @@ function finishLesson(){
   $("lfXp").textContent="+"+xp;
   $("lfAcc").textContent=Math.round((L.total-Math.min(L.mistakes,L.total))/L.total*100)+" %";
   $("lfAgain").hidden=false;$("lfBtn").textContent="Weiter";
-  playFanfare();confetti();
+  if(!muted)playFanfare();confetti();
 }
 function closeLesson(){try{vox&&vox.pause()}catch(e){};document.querySelectorAll(".confetti").forEach(c=>c.remove());show("home")}
 
@@ -419,6 +422,7 @@ function confetti(){
 }
 
 $("lsClose").addEventListener("click",closeLesson);
+$("lsMute").addEventListener("click",()=>{setMuted(!muted);const t=L.tasks[L.pos];if(L.status==="none"&&t&&(muted&&t.type==="listen"))renderTask()});
 $("lsBtn").addEventListener("click",cont);
 $("lsType").addEventListener("submit",e=>{e.preventDefault();cont()});
 $("lfBtn").addEventListener("click",closeLesson);

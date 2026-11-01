@@ -150,3 +150,14 @@
 #home .sticky{position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:10px;
   margin:calc(-1*var(--top)) calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;
   padding:var(--top) max(16px,env(safe-area-inset-left,0px)) 8px;background:var(--bg);box-shadow:0 1px 0 var(--line)}
+
+/* Einstellungen kompakt, Schalter */
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.srow h2{flex:1}
+.toggle{flex:0 0 auto;width:52px;height:30px;border-radius:99px;border:0;background:var(--line);position:relative;padding:0;transition:background .15s}
+.toggle i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.toggle[aria-checked="true"]{background:var(--ok)}
+.toggle[aria-checked="true"] i{left:25px}
+#settings .vheard:empty,#settings .vdiag:empty{display:none}
+.lsmute{background:none;border:0;font-size:1.25rem;padding:4px;line-height:1}
+body.muted .bubble .spk{display:none}

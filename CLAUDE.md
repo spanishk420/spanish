@@ -12,7 +12,8 @@ Kommunikation mit dem Nutzer auf Deutsch, locker, kurze Antworten.
   - `src/voice.js`: Sprachmodus (Vorlesen per speechSynthesis, Spracherkennung per webkitSpeechRecognition)
   - `src/game.js` + `src/game.css`: Lernpfad (Startseite) und Lektionen im Duolingo-Stil. Aufbau angelehnt an sanidhyy/duolingo-clone (MIT) – nur Code-Ideen übernommen, KEINE Bilder/Sounds aus dem Repo (vermutlich Duolingo-Material).
   - `src/build.py`: fügt PWA-Head, Sprachmodus-HTML/CSS, voice.js, game.js/css, Aufnahmen-Liste und Version in base.html ein
-  - Einstellungen (#settings) stehen in base.html: Ton für Karteikarten, Mikro-Test, Fortschritt zurücksetzen.
+  - Einstellungen (#settings) stehen in base.html, bewusst knapp: 🔇 Kein Sound (Schalter), Karteikarten vorlesen, 🎙️ Mikrofon „Testen“, Fortschritt zurücksetzen.
+  - Kein Sound (`muted`, localStorage `clonelingo-mute`, auch 🔊/🔇 im Lektionskopf): Lektionen spielen nichts ab, Hör-Aufgaben werden beim Anzeigen durch pickEs ersetzt; Karteikarten lesen nicht vor. Sprachmodus ignoriert es (ist reines Audio).
 - `sw.js`: Service Worker (network-first, eigene Dateien mit `cache: "no-cache"`, weil GitHub Pages 10 Min. Browser-Cache setzt). Bei Änderungen die Cache-Version (`espanol-vN`) hochzählen – sie wird auch als „Version N“ in den Einstellungen angezeigt.
 - `manifest.webmanifest`, `icons/`: PWA-Metadaten, Icon „ñ“ mit Sonne.
 - `robots.txt` + `<meta name="robots" content="noindex">`: Seite soll nicht in Suchmaschinen auftauchen (bewusst, privat).
