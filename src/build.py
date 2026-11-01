@@ -6,6 +6,7 @@ here = pathlib.Path(__file__).parent
 out = here.parent / "index.html"
 voice_js = (here / "voice.js").read_text(encoding="utf-8")
 game_js = (here / "game.js").read_text(encoding="utf-8")
+car_js = (here / "car.js").read_text(encoding="utf-8")
 game_css = (here / "game.css").read_text(encoding="utf-8")
 version = re.search(r'espanol-v(\d+)', (here.parent / "sw.js").read_text(encoding="utf-8")).group(1)
 
@@ -95,7 +96,7 @@ s = rep(s, "\n<script>\n", voice_html + "\n<script>\n")
 # Ansichten: Sprachmodus ausblenden, wenn Kapitel/Übersicht gezeigt wird
 
 s = rep(s, "state=load();show(\"home\");\n</script>",
-        voice_js + "\n" + game_js + "\nstate=load();show(\"home\");\n"
+        voice_js + "\n" + game_js + "\n" + car_js + "\nstate=load();show(\"home\");\n"
         "// Zoomen verhindern (Wunsch des Nutzers): Zwei-Finger-Zoom und Doppeltippen abfangen\n"
         "for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});\n"
         "document.addEventListener('touchmove',e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});\n"

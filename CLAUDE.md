@@ -42,6 +42,11 @@ Fortschritt nur in localStorage: Karten-Level `verbos-v2` (wird auch von Lektion
 - Diagnose: im Sprachmodus Zeile mit Stimmen / Mikro-Fehlern; „🧪 Mikro testen“ in ⚙️ Einstellungen (Zahnrad oben links auf der Startseite, Ansicht #settings in build.py). Nach 2 stillen Runden Hinweis (Home-Bildschirm-App vs. Safari, Siri & Diktieren).
 - Offen: Bestätigung auf echtem iPhone, v. a. ob Erkennung in der Home-Bildschirm-App geht.
 
+## Auto-Modus (`src/car.js`, Ansicht #car)
+CarPlay kann keine Web-Apps; Mikrofon geht mit CarPlay nicht (Nutzer getestet). Echte CarPlay-App bräuchte native App + Apple-Entitlement, Lern-Apps passen in keine erlaubte Kategorie → stattdessen nur Hören.
+Baut aus den Aufnahmen EINE WAV-Spur (OfflineAudioContext, 22 kHz mono): Frage → Pause (3–8 s) → Antwort → Antwort nochmal. Eine Datei, damit es bei gesperrtem Bildschirm weiterläuft; Media Session zeigt das Wort in CarPlay „Wird gespielt“ (Lösung erst ab Antwortzeit), ⏭/⏮ springen zwischen Wörtern. Quelle: gelernte Wörter (schwierige zuerst) oder ein offenes Kapitel; Richtung, Pause, Anzahl in localStorage `clonelingo-car`. Download als WAV möglich. Ignoriert „Kein Sound“. Tests brauchen http-Server (fetch geht nicht über file://).
+Offen: ob iOS die Wiedergabe aus der Home-Bildschirm-App bei gesperrtem Bildschirm fortsetzt.
+
 ## Zoom
 Zoomen ist auf Wunsch des Nutzers gesperrt: viewport `user-scalable=no`, `touch-action:manipulation` (Doppeltippen), gesturestart/touchmove mit 2 Fingern abgefangen (build.py). Kein touchend-Abfangen, das würde schnelle Tipps verschlucken. Eingabefelder brauchen ≥16px Schrift, sonst zoomt iOS beim Fokus.
 

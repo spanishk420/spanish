@@ -144,6 +144,34 @@ h1 span{color:var(--sol)}
   </div>
 </div>
 
+<div class="app" id="car" hidden>
+  <header>
+    <button class="ghost" id="carBack" type="button">‹ Zurück</button>
+    <span class="chname">🚗 Auto-Modus</span>
+    <span style="width:60px"></span>
+  </header>
+  <div class="carstage">
+    <div class="carcount" id="carCount"></div>
+    <div class="carnow" id="carNow">Bereit</div>
+    <div class="carsub" id="carSub"></div>
+    <div class="bar carbar" aria-hidden="true"><i id="carBar"></i></div>
+    <div class="carctl">
+      <button class="carbtn" id="carPrev" type="button" aria-label="Vorheriges Wort">⏮</button>
+      <button class="carbtn big" id="carPlay" type="button" aria-label="Abspielen">▶</button>
+      <button class="carbtn" id="carNext" type="button" aria-label="Nächstes Wort">⏭</button>
+    </div>
+    <button class="mlater" id="carNew" type="button">↻ Neue Runde mischen</button>
+  </div>
+  <div class="sbox carset">
+    <label for="carSrc">Wörter</label>
+    <select id="carSrc"></select>
+    <label>Richtung</label><div class="seg" id="carDir"></div>
+    <label>Pause zum Antworten</label><div class="seg" id="carPause"></div>
+    <label>Anzahl Wörter</label><div class="seg" id="carNum"></div>
+  </div>
+  <p class="vtip">Antworte laut in der Pause. Läuft auch bei gesperrtem Bildschirm und in CarPlay unter „Wird gespielt“; ⏭/⏮ am Lenkrad springt zum nächsten Wort. <a id="carDl" download="clonelingo-auto.wav" hidden>💾 Als Audiodatei speichern</a></p>
+</div>
+
 <div class="app" id="settings" hidden>
   <header>
     <button class="ghost" id="sBack" type="button">‹ Zurück</button>
@@ -705,7 +733,7 @@ function check(){
   revealed=true;render();$("nextBtn").focus();
   if(sound)speakCurrent();
 }
-function show(view){for(const v of ["home","train","settings","lesson","voice"]){const el=$(v);if(el)el.hidden=v!==view}if(view==="home")renderHome()}
+function show(view){for(const v of ["home","train","settings","lesson","voice","car"]){const el=$(v);if(el)el.hidden=v!==view}if(view==="home")renderHome()}
 function openChapter(ch){
   if(ch!==chap){chap=ch;cur=-1;recent=[]}
   $("chname").textContent=CHAPTERS[ch].name;

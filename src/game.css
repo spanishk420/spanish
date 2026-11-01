@@ -187,3 +187,24 @@ body.muted .bubble .spk{display:none}
 .mcard p{margin:0;color:var(--muted);line-height:1.45}
 .memoji{font-size:3.5rem}
 .mlater{background:none;border:0;color:var(--muted);font-weight:700;padding:8px;font:inherit}
+
+/* Auto-Modus */
+.carcard{background:linear-gradient(135deg,var(--azul-soft),var(--surface));border-color:var(--azul)}
+.carcard .go{color:var(--azul)}
+#car{height:auto;min-height:100%}
+.carstage{display:flex;flex-direction:column;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px 18px;text-align:center}
+.carcount{font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;min-height:1em}
+.carnow{font-family:var(--f-display);font-weight:800;font-size:clamp(1.8rem,8vw,2.4rem);line-height:1.1;min-height:1.2em}
+.carnow.es{color:var(--azul)}
+.carsub{font-family:var(--f-display);font-weight:800;font-size:1.4rem;color:var(--azul);min-height:1.4em}
+.carbar{width:100%}
+.carctl{display:flex;align-items:center;gap:18px;margin-top:6px}
+.carbtn{width:64px;height:64px;border-radius:50%;border:2px solid var(--line);background:var(--bg);font-size:1.5rem;color:var(--ink)}
+.carbtn.big{width:96px;height:96px;font-size:2.4rem;background:var(--azul);color:#fff;border:0;box-shadow:0 6px 0 #163A78}
+.carbtn.big:active{transform:translateY(4px);box-shadow:0 2px 0 #163A78}
+.carset label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin-top:4px}
+.carset select{font:inherit;font-size:1rem;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.segbtn{flex:1;font:inherit;font-weight:700;font-size:.9rem;padding:10px 8px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--muted);white-space:nowrap}
+.segbtn.on{border-color:var(--azul);background:var(--azul-soft);color:var(--azul)}
+#carDl{display:inline-block;margin-top:6px;color:var(--azul);font-weight:700}

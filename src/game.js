@@ -112,6 +112,10 @@ function renderPath(){
     rc.addEventListener("click",startRefresh);
     path.appendChild(rc);
   }
+  // Auto-Modus (nur hören)
+  const cc=document.createElement("button");cc.type="button";cc.className="refresh carcard";
+  cc.innerHTML=`<span class="ri">🚗</span><span><b>Auto-Modus</b><small>Nur hören und laut antworten, auch mit CarPlay</small></span><span class="go">›</span>`;
+  cc.addEventListener("click",openCar);path.appendChild(cc);
   UNITS.forEach((u,ui)=>{
     const open=unitOpen(ui);
     const ls=unitLessons(u), sec=document.createElement("section");sec.className="unit "+u.color;
