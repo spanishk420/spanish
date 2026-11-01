@@ -8,7 +8,9 @@ Kommunikation mit dem Nutzer auf Deutsch, locker, kurze Antworten.
 - `index.html` wird GEBAUT, nicht direkt bearbeiten: `python3 src/build.py src/base.html`
   - `src/base.html`: Karteikarten-App (Kapitel, Daten, Karteikarten-Logik, Stimmen-Auswahl, Reset)
   - `src/voice.js`: Sprachmodus (Vorlesen per speechSynthesis, Spracherkennung per webkitSpeechRecognition)
-  - `src/build.py`: fügt PWA-Head, Sprachmodus-HTML/CSS und voice.js in base.html ein
+  - `src/game.js` + `src/game.css`: Lernpfad (Startseite) und Lektionen im Duolingo-Stil. Aufbau angelehnt an sanidhyy/duolingo-clone (MIT) – nur Code-Ideen übernommen, KEINE Bilder/Sounds aus dem Repo (vermutlich Duolingo-Material).
+  - `src/build.py`: fügt PWA-Head, Sprachmodus-HTML/CSS, voice.js, game.js/css, Aufnahmen-Liste und Version in base.html ein
+  - Einstellungen (#settings) stehen in base.html: Ton für Karteikarten, Mikro-Test, Fortschritt zurücksetzen.
 - `sw.js`: Service Worker (network-first, eigene Dateien mit `cache: "no-cache"`, weil GitHub Pages 10 Min. Browser-Cache setzt). Bei Änderungen die Cache-Version (`espanol-vN`) hochzählen – sie wird auch als „Version N“ in den Einstellungen angezeigt.
 - `manifest.webmanifest`, `icons/`: PWA-Metadaten, Icon „ñ“ mit Sonne.
 - `robots.txt` + `<meta name="robots" content="noindex">`: Seite soll nicht in Suchmaschinen auftauchen (bewusst, privat).
@@ -16,7 +18,9 @@ Kommunikation mit dem Nutzer auf Deutsch, locker, kurze Antworten.
 ## Kapitel
 1. Verben (30, beide Richtungen) · 2. Farben simpel (10 Grundfarben) · 3. Weitere Farben · 4. Zahlen (0–100, 200, 500, 1000; eintippen)
 5. Konjugation und 6. Alltagssätze sind als „bald“ markiert.
-Fortschritt nur in localStorage (`verbos-v2`). Gewichtung: niedriges Level und häufiges „nicht gewusst“ kommen öfter dran.
+Startseite = Lernpfad: pro Kapitel eine Einheit mit Lektionen (5 Wörter; Zahlen in Bereichen) + 👑 Wiederholung. Lektionen pro Einheit nacheinander freigeschaltet. „📇 Üben“ im Einheiten-Banner öffnet die alten Karteikarten (dort auch Sprachmodus).
+Aufgabentypen: pickDe (Spanisch → Bedeutung wählen), pickEs, listen (Aufnahme hören), color (Farbfeld wählen), type (Spanisch schreiben). 5 Herzen pro Lektion, falsche Aufgaben kommen am Ende nochmal. XP = 1 pro Aufgabe (+5 ohne Fehler), Tagesziel 30 XP, Serie 🔥 in Tagen.
+Fortschritt nur in localStorage: Karten-Level `verbos-v2` (wird auch von Lektionen aktualisiert), Spielstand `espanol-game-v1` (xp, done, streak). Gewichtung: niedriges Level und häufiges „nicht gewusst“ kommen öfter dran.
 
 ## Sprachmodus – Wünsche des Nutzers
 - Für unterwegs/Auto, ohne Tippen.

@@ -5,6 +5,8 @@ src = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
 here = pathlib.Path(__file__).parent
 out = here.parent / "index.html"
 voice_js = (here / "voice.js").read_text(encoding="utf-8")
+game_js = (here / "game.js").read_text(encoding="utf-8")
+game_css = (here / "game.css").read_text(encoding="utf-8")
 version = re.search(r'espanol-v(\d+)', (here.parent / "sw.js").read_text(encoding="utf-8")).group(1)
 
 def rep(s, old, new, count=1):
@@ -52,22 +54,15 @@ voice_css = """
 .vbig{grid-column:1/-1;font-size:1.3rem;padding:26px 10px}
 .vmicbtn{grid-column:1/-1;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .vmicbtn[aria-pressed="true"]{border-color:var(--azul);color:var(--azul)}
-.gear{font-size:1.25rem;line-height:1;background:none;border:1px solid var(--line);border-radius:999px;width:38px;height:38px;padding:0;color:var(--muted);flex:0 0 auto}
-.home-title{flex:1;min-width:0}
-.sbox{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
-.sbox h2{font-family:var(--f-display);font-size:1.1rem;margin:0}
-.sbox p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.45}
 .vdiag{color:var(--muted);font-size:.8rem;line-height:1.4;text-align:center;min-height:1em}
 .vdiag:empty{display:none}
 .vtip{margin:0;color:var(--muted);font-size:.82rem;line-height:1.45;text-align:center}
 @media (prefers-reduced-motion:reduce){.vstatus.listen{animation:none}}
 """
-s = rep(s, "@media (prefers-reduced-motion:reduce){.bar i", voice_css + "@media (prefers-reduced-motion:reduce){.bar i")
+s = rep(s, "@media (prefers-reduced-motion:reduce){.bar i", voice_css + game_css + "@media (prefers-reduced-motion:reduce){.bar i")
 
 # Sprachmodus-Knopf im Kapitel
 s = rep(s, '  <div class="stats">\n    <div class="stat"><b id="sKnown">', '  <button class="mic" id="voiceBtn" type="button">🎙️ Sprachmodus: sprechen statt tippen</button>\n  <div class="stats">\n    <div class="stat"><b id="sKnown">')
-s = rep(s, '<p class="intro">Wähl ein Kapitel. Jedes Wort wird in beide Richtungen abgefragt, und was du oft nicht weißt, kommt öfter dran.</p>',
-        '<p class="intro">Wähl ein Kapitel. Jedes Wort wird in beide Richtungen abgefragt, und was du oft nicht weißt, kommt öfter dran. Im Kapitel startest du mit <b>🎙️ Sprechen</b> den Sprachmodus, ganz ohne Tippen.</p>')
 
 voice_html = """
 <div class="app" id="voice" hidden>
@@ -93,40 +88,15 @@ voice_html = """
   <p class="vtip">Mikro geht nicht? Teste es über ⚙️ Einstellungen auf der Startseite. Sag „nochmal“, um das Wort erneut zu hören, „weiß nicht“ zum Überspringen und „Stopp“ zum Anhalten.</p>
 </div>
 """
-settings_html = """
-<div class="app" id="settings" hidden>
-  <header>
-    <button class="ghost" id="sBack" type="button">‹ Zurück</button>
-    <span class="chname">Einstellungen</span>
-    <span style="width:60px"></span>
-  </header>
-  <div class="sbox">
-    <h2>🎙️ Mikrofon testen</h2>
-    <p>Prüft, ob die Spracherkennung für den Sprachmodus funktioniert. Tippe auf den Knopf und sag etwas auf Deutsch.</p>
-    <div class="vstatus" id="sStatus" role="status" aria-live="polite"></div>
-    <div class="vheard" id="sHeard"></div>
-    <button class="btn show" id="sTest" type="button">🧪 Mikro testen</button>
-    <div class="vdiag" id="sDiag"></div>
-  </div>
-  <details class="sbox">
-    <summary><b>Alle Stimmen anzeigen</b></summary>
-    <pre id="sVoices" style="white-space:pre-wrap;font-size:.72rem;line-height:1.5;margin:8px 0 0;color:var(--muted)"></pre>
-  </details>
-  <p class="vtip">Version """ + version + """</p>
-</div>
-"""
-s = rep(s, "\n<script>\n", voice_html + settings_html + "\n<script>\n")
-s = rep(s, '<header><h1>Español <span>¡ya!</span></h1>',
-        '<header><button class="gear" id="settingsBtn" type="button" aria-label="Einstellungen">⚙️</button><h1 class="home-title">Español <span>¡ya!</span></h1>')
+s = rep(s, "\n<script>\n", voice_html + "\n<script>\n")
 
 # Ansichten: Sprachmodus ausblenden, wenn Kapitel/Übersicht gezeigt wird
-s = rep(s, 'function show(view){$("home").hidden=view!=="home";$("train").hidden=view!=="train";',
-        'function show(view){$("home").hidden=view!=="home";$("train").hidden=view!=="train";$("voice").hidden=true;$("settings").hidden=true;')
 
 s = rep(s, "state=load();show(\"home\");\n</script>",
-        voice_js + "\nstate=load();show(\"home\");\n"
+        voice_js + "\n" + game_js + "\nstate=load();show(\"home\");\n"
         "if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));\n</script>\n</body>\n</html>")
 s = rep(s, "</style>\n", "</style>\n</head>\n<body>\n")
+s = rep(s, "{{VERSION}}", version)
 # Aufnahmen-Liste einsetzen (audio/manifest.json, erzeugt von tools/gen_audio.py)
 import json
 mf = here.parent / "audio" / "manifest.json"

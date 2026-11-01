@@ -122,56 +122,86 @@ h1 span{color:var(--sol)}
 </style>
 
 <div class="app" id="home">
-  <header><h1>Español <span>¡ya!</span></h1><button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button></header>
-  <div class="voiceRow" id="voiceRow" hidden>
-    <label>Stimme</label>
-    <div class="row">
-      <button class="vbtn" id="vPrev" type="button" aria-label="Vorherige Stimme">‹</button>
-      <div class="vname"><b id="vName">…</b><small id="vCount"></small></div>
-      <button class="vbtn" id="vNext" type="button" aria-label="Nächste Stimme">›</button>
+  <header class="topbar">
+    <button class="gear" id="settingsBtn" type="button" aria-label="Einstellungen">⚙️</button>
+    <h1 class="home-title">Español <span>¡ya!</span></h1>
+    <span class="pill streak" id="gStreak" title="Tage in Folge">🔥 0</span>
+    <span class="pill xp" id="gXp" title="Erfahrungspunkte">⚡ 0</span>
+  </header>
+  <div class="goal" id="gGoal"><span id="gGoalTxt">Tagesziel</span><div class="bar"><i id="gGoalBar"></i></div></div>
+  <div class="path" id="path"></div>
+</div>
+
+<div class="app" id="settings" hidden>
+  <header>
+    <button class="ghost" id="sBack" type="button">‹ Zurück</button>
+    <span class="chname">Einstellungen</span>
+    <span style="width:60px"></span>
+  </header>
+  <div class="sbox">
+    <h2>🔊 Vorlesen bei Karteikarten</h2>
+    <p>Liest bei den Karteikarten das spanische Wort vor. In Lektionen und im Sprachmodus wird immer vorgelesen.</p>
+    <button class="sound" id="soundHome" type="button" aria-pressed="false">🔇 Ton aus</button>
+    <div class="voiceRow" id="voiceRow" hidden>
+      <label>Ersatzstimme (für Texte ohne Aufnahme)</label>
+      <div class="row">
+        <button class="vbtn" id="vPrev" type="button" aria-label="Vorherige Stimme">‹</button>
+        <div class="vname"><b id="vName">…</b><small id="vCount"></small></div>
+        <button class="vbtn" id="vNext" type="button" aria-label="Nächste Stimme">›</button>
+      </div>
+      <button class="say" id="voiceTest" type="button">▶ Stimme testen</button>
     </div>
-    <button class="say" id="voiceTest" type="button">▶ Stimme testen</button>
-    <p id="voiceTip">Die beste Stimme ist schon ausgewählt. Klingt sie roboterhaft, lade in den Handy-Einstellungen eine bessere spanische Stimme herunter.</p>
   </div>
-  <p class="intro">Wähl ein Kapitel. Jedes Wort wird in beide Richtungen abgefragt, und was du oft nicht weißt, kommt öfter dran.</p>
-  <div class="chapters">
-    <button class="chapter" id="ch-verbs" type="button">
-      <span class="num">1</span>
-      <span><h2>Verben</h2><p class="info"></p><div class="mini"><i></i></div></span>
-      <span class="go" aria-hidden="true">›</span>
-    </button>
-    <button class="chapter" id="ch-colors" type="button">
-      <span class="num">2</span>
-      <span><h2>Farben simpel <span class="dots" aria-hidden="true"><i style="background:#D62B2B"></i><i style="background:#F2C21B"></i><i style="background:#2E8B3E"></i><i style="background:#2457C5"></i></span></h2><p class="info"></p><div class="mini"><i></i></div></span>
-      <span class="go" aria-hidden="true">›</span>
-    </button>
-    <button class="chapter" id="ch-colors2" type="button">
-      <span class="num">3</span>
-      <span><h2>Weitere Farben <span class="dots" aria-hidden="true"><i style="background:#7B3FA0"></i><i style="background:#1FB5A8"></i><i style="background:#C9971C"></i><i style="background:#A8A8A8"></i></span></h2><p class="info"></p><div class="mini"><i></i></div></span>
-      <span class="go" aria-hidden="true">›</span>
-    </button>
-    <button class="chapter" id="ch-numbers" type="button">
-      <span class="num">4</span>
-      <span><h2>Zahlen</h2><p class="info"></p><div class="mini"><i></i></div></span>
-      <span class="go" aria-hidden="true">›</span>
-    </button>
-    <button class="chapter" type="button" disabled>
-      <span class="num">5</span>
-      <span><h2>Konjugation</h2><p>yo, tú, él … im Präsens</p></span>
-      <span class="soon">bald</span>
-    </button>
-    <button class="chapter" type="button" disabled>
-      <span class="num">6</span>
-      <span><h2>Alltagssätze</h2><p>¿Qué haces?, No sé …</p></span>
-      <span class="soon">bald</span>
-    </button>
+  <div class="sbox">
+    <h2>🎙️ Mikrofon testen</h2>
+    <p>Prüft, ob die Spracherkennung für den Sprachmodus funktioniert. Tippe auf den Knopf und sag etwas auf Deutsch.</p>
+    <div class="vstatus" id="sStatus" role="status" aria-live="polite"></div>
+    <div class="vheard" id="sHeard"></div>
+    <button class="btn show" id="sTest" type="button">🧪 Mikro testen</button>
+    <div class="vdiag" id="sDiag"></div>
   </div>
   <button class="wipe" id="wipe" type="button">Gesamten Fortschritt zurücksetzen</button>
+  <p class="vtip">Version {{VERSION}}</p>
+</div>
+
+<div class="app" id="lesson" hidden>
+  <div id="lsMain" class="lsmain">
+    <header class="lshead">
+      <button class="lsclose" id="lsClose" type="button" aria-label="Lektion beenden">✕</button>
+      <div class="bar lsbar" aria-hidden="true"><i id="lsBar"></i></div>
+      <span class="lshearts" id="lsHearts">❤️ 5</span>
+    </header>
+    <div class="lsbody">
+      <h2 class="lstitle" id="lsTitle"></h2>
+      <div class="lsq" id="lsQ"></div>
+      <div class="lsopts" id="lsOpts"></div>
+      <form class="lstype" id="lsType" hidden autocomplete="off">
+        <input id="lsInp" type="text" aria-label="Antwort auf Spanisch" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Auf Spanisch schreiben …">
+      </form>
+    </div>
+    <footer class="lsfoot" id="lsFoot">
+      <div class="lsmsg" id="lsMsg" role="status" aria-live="polite"></div>
+      <button class="gbtn" id="lsBtn" type="button" disabled>Prüfen</button>
+    </footer>
+  </div>
+  <div id="lsFinish" class="lsfinish" hidden>
+    <div class="lfemoji" id="lfEmoji">🎉</div>
+    <h2 id="lfTitle">Lektion geschafft!</h2>
+    <p id="lfText"></p>
+    <div class="lfcards">
+      <div class="lfcard xp"><small>XP</small><b id="lfXp">0</b></div>
+      <div class="lfcard acc"><small>Genauigkeit</small><b id="lfAcc">100 %</b></div>
+    </div>
+    <div class="lfbtns">
+      <button class="gbtn ghostbtn" id="lfAgain" type="button">Nochmal üben</button>
+      <button class="gbtn" id="lfBtn" type="button">Weiter</button>
+    </div>
+  </div>
 </div>
 
 <div class="app" id="train" hidden>
   <header>
-    <button class="ghost" id="back" type="button">‹ Kapitel</button>
+    <button class="ghost" id="back" type="button">‹ Lernpfad</button>
     <span class="chname" id="chname"></span>
     <span class="hgroup">
       <button class="sound" id="soundTrain" type="button" aria-pressed="false">🔇</button>
@@ -376,13 +406,7 @@ function render(){
   $("sOk").textContent=st.ok; $("sNo").textContent=st.no;
   $("bar").style.width=(k/n*100)+"%";
 }
-function renderHome(){
-  for(const ch in CHAPTERS){
-    const el=$("ch-"+ch), k=knownCount(ch), n=DECKS[ch].length;
-    el.querySelector(".info").textContent=`${CHAPTERS[ch].items.length} ${CHAPTERS[ch].unit} · ${n} Karten · ${k} sitzen`;
-    el.querySelector(".mini i").style.width=(k/n*100)+"%";
-  }
-}
+function renderHome(){renderPath()}
 function next(){
   if(cur>=0){recent.push(cur);if(recent.length>3)recent.shift()}
   cur=pick();revealed=false;verdict=null;render();
@@ -426,7 +450,6 @@ function findVoice(){
   // Gespeicherte Wahl behalten – außer inzwischen gibt es eine hochwertigere Stimme (z. B. neu geladen)
   esVoice=keep&&voiceTier(keep)>=voiceTier(esVoices[0])?keep:esVoices[0]||null;
   renderVoice();
-  if(!esVoices.length)$("voiceTip").textContent="Dein Handy hat keine spanische Stimme. Lade in den Einstellungen unter Sprachausgabe eine spanische Stimme herunter.";
 }
 function renderVoice(){
   const k=esVoices.indexOf(esVoice), n=esVoices.length;
@@ -525,7 +548,7 @@ function check(){
   revealed=true;render();$("nextBtn").focus();
   if(sound)speakCurrent();
 }
-function show(view){$("home").hidden=view!=="home";$("train").hidden=view!=="train";if(view==="home")renderHome()}
+function show(view){for(const v of ["home","train","settings","lesson","voice"]){const el=$(v);if(el)el.hidden=v!==view}if(view==="home")renderHome()}
 function openChapter(ch){
   if(ch!==chap){chap=ch;cur=-1;recent=[]}
   $("chname").textContent=CHAPTERS[ch].name;
@@ -533,7 +556,6 @@ function openChapter(ch){
   show("train"); if(cur<0)next(); else render();
 }
 
-for(const ch in CHAPTERS)$("ch-"+ch).addEventListener("click",()=>openChapter(ch));
 $("back").addEventListener("click",()=>show("home"));
 $("card").addEventListener("click",reveal);
 $("card").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();reveal()}});
@@ -556,7 +578,7 @@ $("wipe").addEventListener("click",()=>{
   state={c:{},st:{}};
   for(const ch in DECKS){state.st[ch]={ok:0,no:0};DECKS[ch].forEach(c=>{state.c[c.id]={lv:0,miss:0}})}
   try{localStorage.removeItem("verbos-v1")}catch(e){}
-  save();cur=-1;recent=[];renderHome();
+  save();cur=-1;recent=[];resetGame();
   b.textContent="Alles zurückgesetzt ✓";
   setTimeout(()=>{b.textContent="Gesamten Fortschritt zurücksetzen"},2500);
 });
