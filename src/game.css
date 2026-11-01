@@ -148,5 +148,5 @@
 
 /* Kopfleiste bleibt beim Scrollen oben stehen */
 #home .sticky{position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:10px;
-  margin:-16px calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;padding:16px max(16px,env(safe-area-inset-left,0px)) 12px;
+  margin:-16px calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;padding:16px max(16px,env(safe-area-inset-left,0px)) 10px;
   padding-top:max(16px,env(safe-area-inset-top,0px));background:var(--bg);box-shadow:0 1px 0 var(--line)}
