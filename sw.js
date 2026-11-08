@@ -1,5 +1,5 @@
 // Offline-Unterstützung: immer erst online laden, sonst aus dem Speicher
-const CACHE = "espanol-v22";
+const CACHE = "espanol-v23";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 // Sprachaufnahmen gleich mitladen, damit der Sprachmodus auch ohne Netz (Auto) klingt
 const cacheAudio = c => fetch("audio/manifest.json", { cache: "no-cache" }).then(r => r.json())

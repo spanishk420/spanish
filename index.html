@@ -451,7 +451,7 @@ body.muted .bubble .spk{display:none}
     <div class="vdiag" id="sDiag"></div>
   </div>
   <button class="wipe" id="wipe" type="button">Gesamten Fortschritt zurücksetzen</button>
-  <p class="vtip">Version 22</p>
+  <p class="vtip">Version 23</p>
 </div>
 
 <div class="app" id="lesson" hidden>
@@ -785,7 +785,7 @@ let verdict=null;
 const norm=s=>s.toLowerCase().trim().replace(/\s+/g," ");
 const plain=s=>norm(s).normalize("NFD").replace(/[̀-ͯ]/g,"");
 const KEY="verbos-v2";
-let state, chap="verbs", cur=-1, recent=[], revealed=false;
+let state, chap="verbs", cur=-1, recent=[], again=[], revealed=false;
 
 function initCard(s,ch,c){const lv=CHAPTERS[ch].items[c.i][4];s.c[c.id]={lv:c.dir==="es"?Math.min(lv+1,4):lv,miss:0}}
 function load(){
@@ -806,8 +806,10 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 
 const deck=()=>DECKS[chap];
 const item=c=>CHAPTERS[chap].items[c.i];
-// Gewicht: niedriges Level zählt doppelt pro Stufe, jedes „nicht gewusst“ erhöht es weiter
-function weight(c){const s=state.c[c.id];return Math.pow(2,4-s.lv)*(1+s.miss*0.6)}
+// Gewicht: niedriges Level zählt doppelt pro Stufe. Fehler zählen pro WORT (beide Richtungen, auch aus Lektionen)
+// und stark: jedes „nicht gewusst“ macht das Wort deutlich häufiger, auch nachdem es wieder einmal richtig war.
+function itemMiss(c){return deck().filter(o=>o.i===c.i).reduce((a,o)=>a+state.c[o.id].miss,0)}
+function weight(c){const s=state.c[c.id];return Math.pow(2,4-s.lv)*(1+Math.min(itemMiss(c),8)*1.5)}
 function pick(){
   const d=deck(), block=Math.min(3,Math.floor(CHAPTERS[chap].items.length/3));
   const ws=d.map(c=>recent.slice(-block).some(r=>d[r].i===c.i)?0:weight(c));
@@ -852,7 +854,11 @@ function render(){
 function renderHome(){renderPath();scrollToLast()}
 function next(){
   if(cur>=0){recent.push(cur);if(recent.length>3)recent.shift()}
-  cur=pick();revealed=false;verdict=null;render();
+  // Nicht gewusste Karten kommen nach ca. 3 anderen Karten garantiert nochmal
+  again.forEach(a=>a.wait--);
+  const due=again.findIndex(a=>a.wait<=0);
+  if(due>=0){cur=again[due].k;again.splice(due,1)}else cur=pick();
+  revealed=false;verdict=null;render();
   if(typeMode()){$("inp").value="";$("inp").focus()}
 }
 // Vorlesen: nur das spanische Wort, nur wenn die Lösung Spanisch ist (Deutsch→Spanisch und Zahlen)
@@ -992,7 +998,7 @@ function reveal(){if(!revealed&&!typeMode()){revealed=true;render();if(sound)spe
 function applyGrade(knew){
   const s=state.c[deck()[cur].id], st=state.st[chap];
   if(knew){s.lv=Math.min(4,s.lv+1);st.ok++}
-  else{s.lv=0;s.miss++;st.no++}
+  else{s.lv=0;s.miss++;st.no++;if(!again.some(a=>a.k===cur))again.push({k:cur,wait:4})}
   save();
 }
 function grade(knew){applyGrade(knew);next()}
@@ -1009,7 +1015,7 @@ function check(){
 }
 function show(view){for(const v of ["home","train","settings","lesson","voice","car"]){const el=$(v);if(el)el.hidden=v!==view}if(view==="home")renderHome()}
 function openChapter(ch){
-  if(ch!==chap){chap=ch;cur=-1;recent=[]}
+  if(ch!==chap){chap=ch;cur=-1;recent=[];again=[]}
   $("chname").textContent=CHAPTERS[ch].name;
   $("train").classList.toggle("compact",CHAPTERS[ch].mode==="type");
   show("train"); if(cur<0)next(); else render();
@@ -1038,7 +1044,7 @@ $("wipe").addEventListener("click",()=>{
   state={c:{},st:{}};
   for(const ch in DECKS){state.st[ch]={ok:0,no:0};DECKS[ch].forEach(c=>{state.c[c.id]={lv:0,miss:0}})}
   try{localStorage.removeItem("verbos-v1")}catch(e){}
-  save();cur=-1;recent=[];resetGame();
+  save();cur=-1;recent=[];again=[];resetGame();
   b.textContent="Alles zurückgesetzt ✓";
   setTimeout(()=>{b.textContent="Gesamten Fortschritt zurücksetzen"},2500);
 });
@@ -1053,7 +1059,7 @@ $("reset").addEventListener("click",()=>{
   if(!armed){armed=true;$("reset").textContent="Sicher? Nochmal tippen";setTimeout(()=>{armed=false;$("reset").textContent="Neu starten"},3000);return}
   armed=false;$("reset").textContent="Neu starten";
   DECKS[chap].forEach(c=>initCard(state,chap,c));state.st[chap]={ok:0,no:0};
-  save();recent=[];cur=-1;next();
+  save();recent=[];again=[];cur=-1;next();
 });
 // ===== Sprachmodus: App liest vor, hört durchgehend zu und bewertet =====
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;

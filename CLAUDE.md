@@ -29,7 +29,7 @@ Aufgabentypen: pickDe (Spanisch → Bedeutung wählen), pickEs, listen (Aufnahme
 Pfad scrollt beim Öffnen zur nächsten Lektion der zuletzt gespielten Einheit (game.lastUnit).
 👹 Boss am Ende jedes Kapitels (nach 👑 Wiederholung): 12 Aufgaben nur type/build und listenType (hören + schreiben), schwache Wörter bevorzugt, 3 Herzen, +20 XP. Sieg setzt game.boss[ch] und schaltet das nächste Kapitel frei. Kapitel offen = erstes Kapitel, Boss davor besiegt, oder schon angefangen (alter Fortschritt).
 🌅 Tägliche Auffrischung: ab 4 gelernten Wörtern (= Wörter aus geschafften Lektionen). Beim ersten Öffnen des Tages ein Hinweis-Fenster (game.refreshPrompt), dazu oben im Pfad eine Karte. 10 Wörter, gewichtet nach Fehlern (miss) und niedrigem Level, gemischte Aufgaben. Erledigt: game.refreshDay. 5 Herzen pro Lektion, falsche Aufgaben kommen am Ende nochmal. XP = 1 pro Aufgabe (+5 ohne Fehler), Tagesziel 30 XP, Serie 🔥 in Tagen.
-Fortschritt nur in localStorage: Karten-Level `verbos-v2` (wird auch von Lektionen aktualisiert), Spielstand `espanol-game-v1` (xp, done, streak). Gewichtung: niedriges Level und häufiges „nicht gewusst“ kommen öfter dran.
+Fortschritt nur in localStorage: Karten-Level `verbos-v2` (wird auch von Lektionen aktualisiert), Spielstand `espanol-game-v1` (xp, done, streak). Karteikarten („📇 Üben“): Gewicht = 2^(4−Level) × (1 + 1,5 × Fehler des WORTS), Fehler beider Richtungen + aus Lektionen zusammengezählt (max. 8). Nicht gewusste Karte kommt nach 3 anderen Karten garantiert nochmal (`again`-Warteschlange). Wunsch des Nutzers: Problemwörter sollen deutlich öfter kommen.
 
 ## Sprachmodus – Wünsche des Nutzers
 - Für unterwegs/Auto, ohne Tippen.
